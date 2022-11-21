@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="2c4ca487-0ee3-40d6-a5bc-7693cf8e7830" name="juliet.local" url="http://juliet.local:1234/">
+        <fileTransfer rootFolder="/srv/huisrekening/data/htdocs/huisrekening" accessType="SFTP" host="juliet.local" port="22" sshConfigId="e1adbb8c-91c2-44f0-9821-d54077af0879" sshConfig="bas@juliet.local:22 agent" authAgent="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" isUseRsync="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
