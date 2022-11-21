@@ -193,8 +193,8 @@ select_language($_SESSION['lang']);
 
 setlocale(LC_TIME, 'nl_NL');
 
-$db_conn=mysql_pconnect($db['host'],$db['user'],$db['passwd']);
-mysql_select_db($db['db'],$db_conn);
+$dbh=new PDO($db['dsn'],$db['user'],$db['passwd']);
+unset($db['dsn']);
 unset($db['user']);
 unset($db['passwd']);
 

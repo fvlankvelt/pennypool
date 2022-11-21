@@ -57,14 +57,13 @@ exit();
 
 	include_once('config.php');
 
-	$conn=mysql_pconnect($db['host'],$db['user'],$db['passwd']);
-	mysql_select_db($db['db'],$conn);
+	$dbh=new PDO($db['dsn'],$db['user'],$db['passwd']);
 
-	$res=mysql_query("SELECT * from ".$db['prefix']."mensen WHERE ".
+	$sth=$dbh->query("SELECT * from ".$db['prefix']."mensen WHERE ".
 			"nick='$login' and password=encrypt('$passwd',".
-				"substring(password,1,2)) LIMIT 1",$conn);
-	if($res && mysql_num_rows($res)==1) {
-		$row=mysql_fetch_assoc($res);
+				"substring(password,1,2)) LIMIT 1");
+	if($sth && $sth->rowCount()==1) {
+		$row=$sth->fetch();
 		unset($passwd);
 		session_start();
 		// $login variable could be overridden by session,
@@ -80,8 +79,6 @@ exit();
 		sleep(1);
 		$passwd="";
 	}
-	if($res)
-		mysql_free_result($res);
 } else if(@$_GET['login']) {
 	$login=$_GET['login'];
 	$passwd="";

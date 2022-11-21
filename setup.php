@@ -99,22 +99,22 @@ HEREDOC
 
 	foreach($tables as $name => $type)
 	{
-		$res=mysql_query("DESCRIBE {$prefix}{$name}", $conn);
-		if(mysql_errno($conn) == 1146)
+		$res=$conn->query("DESCRIBE {$prefix}{$name}");
+		if($res->errorCode() == 1146)
 		{
 			echo "creating $name<br>\n";
 
-			mysql_query("CREATE TABLE {$prefix}{$name} ( ".
-						$type["base"]." ) TYPE=MyISAM", $conn);
+			$conn->exec("CREATE TABLE {$prefix}{$name} ( ".
+						$type["base"]." ) TYPE=MyISAM");
 			if(@$type["init"])
 			{
-				mysql_query("INSERT INTO {$prefix}{$name} ".
-							$type["init"], $conn);
+				$conn->exec("INSERT INTO {$prefix}{$name} ".
+							$type["init"]);
 			}
-			$res=mysql_query("DESCRIBE {$prefix}{$name}", $conn);
+			$res=$conn->query("DESCRIBE {$prefix}{$name}");
 		}
 
-		if(mysql_errno($conn))
+		if($res===false or $res->errorCode())
 		{
 			error("Error for table \"{$prefix}{$name}\"",
 					"An unknown error occured when querying the ".
@@ -124,11 +124,10 @@ HEREDOC
 
 		unset($type["base"]);
 		unset($type["init"]);
-		while($row = mysql_fetch_assoc($res))
+		while($row = $res->fetch())
 		{
 			unset($type[$row["Field"]]);
 		}
-		mysql_free_result($res);
 
 		if(count($type))
 		{
@@ -142,7 +141,7 @@ HEREDOC
 					$query .= ", ";
 				$query .= "ADD COLUMN ".$sub;
 			}
-			mysql_query($query, $conn);
+			$conn->exec($query);
 		}
 	}
 }
@@ -200,13 +199,13 @@ make a backup of your existing data.</p></div><br>
 <h3>Database</h3>
 <table align=center>
   <tr>
-    <td align=right<?php print_style("", $errs, "db_host");
-		?>><label for="db_host">host:</label></td>
-    <td><input type=text name="db_host" id="db_host" size=16 value="<?php
-	if(@$_POST['db_host'])
-		echo $_POST['db_host'];
+    <td align=right<?php print_style("", $errs, "db_dsn");
+		?>><label for="db_dsn">host:</label></td>
+    <td><input type=text name="db_dsn" id="db_dsn" size=16 value="<?php
+	if(@$_POST['db_dsn'])
+		echo $_POST['db_dsn'];
 	else
-		echo "localhost";
+		echo "sqlite:/tmp/pennypool.sqlite:";
 ?>"></td>
   </tr>
   <tr>
@@ -220,16 +219,6 @@ make a backup of your existing data.</p></div><br>
 		echo " checked";
 ?>><label for="db_e_old">Existing Database</label>
     </td>
-  <tr>
-    <td align=right<?php print_style("", $errs, "db_name");
-		?>><label for="db_name">name:</label></td>
-    <td><input type=text name="db_name" id="db_name" size=16 value="<?php
-if(@$_POST['db_name'])
-	echo $_POST['db_name'];
-else
-	echo "pennypool";
-?>"></td>
-  </tr>
 </table>
 </td><td valign=top width="45%" colspan=2 style="border: 1pt solid #aaa; padding: 4pt;">
 <h3>Database User</h3>
@@ -298,9 +287,9 @@ or a new database user is used.</small>
 <?php
 	$dir=opendir("lang");
 	while($file=readdir($dir)) {
-		if(!ereg(".php", $file) || $file=="new_lang.php")
+		if(!preg(".php", $file) || $file=="new_lang.php")
 			continue;
-		$lang=ereg_replace("(.*).php","\\1",$file);
+		$lang=preg_replace("(.*).php","\\1",$file);
 		echo "    <option value=\"$lang\"";
 		if(@$_POST['lang'] == $lang)
 			echo " selected";
@@ -334,20 +323,19 @@ switch(@$_POST['step']) {
 			$_POST['user_exist']=='new') {
 		$root_user=addSlashes($_POST['root_user']);
 		$root_pass=addSlashes($_POST['root_pass']);
-		$db_root=mysql_pconnect($_POST['db_host'],$root_user,$root_pass) or
+		$db_root=new PDO($_POST['db_dsn'],$root_user,$root_pass) or
 			error("Error opening database",
 				"root username and/or password incorrect?");
 
 		if($_POST['db_exist']=='new') {
-			mysql_query("CREATE DATABASE ".$_POST['db_name'], $db_root) or
+			$db_root->exec("CREATE DATABASE ".$_POST['db_name'], $db_root) or
 				error("Error creating database \"".
 						$_POST['db_name']."\"",
 					"An error occurred while creating the new database. ".
 					"Perhaps \"".$_POST['db_name']."\" already exists?");
 		}
 		if($_POST['user_exist']=='new') {
-			mysql_select_db('mysql',$db_root);
-			mysql_query("INSERT INTO user ".
+			$db_root->exec("INSERT INTO user ".
 				"(host,user,password) VALUES ('localhost','".
 					addSlashes($_POST['user']).
 					"',password('".addSlashes($_POST['pass'])."'))",
@@ -356,7 +344,7 @@ switch(@$_POST['step']) {
 					"An error occurred while creating the new user. ".
 					"Perhaps \"".$_POST['user']."\" already exists?");
 		}
-		mysql_query("INSERT INTO db (host,db,user,select_priv,insert_priv,".
+		$db_root->exec("INSERT INTO db (host,db,user,select_priv,insert_priv,".
 			"update_priv,delete_priv,create_priv,drop_priv,index_priv,".
 			"alter_priv) VALUES ('localhost','".
 				addSlashes($_POST['db_name'])."','".
@@ -366,20 +354,15 @@ switch(@$_POST['step']) {
 				"It was not possible to set the permissions for user ".
 				"\"".$_POST['user']."\" and database ".
 				"\"".$_POST['db_name']."\".");
-		mysql_query("FLUSH privileges;",$db_root);
-		mysql_close($db_root);
+		$db_root->exec("FLUSH privileges;",$db_root);
 	}
-	$db_conn=@mysql_connect($_POST['db_host'],
+	$db_conn=@new PDO($_POST['db_dsn'],
 					addSlashes($_POST['user']),
 					addSlashes($_POST['pass'])) or
 		error("Error connecting as \"".$_POST['user']."\"",
 				"Unable to connect to the database server with ".
 				"the given username &amp; password.",
 			  array("user", "pass"));
-	mysql_select_db($_POST['db_name'], $db_conn) or
-		error("Error selecting database \"".$_POST['db_name']."\"",
-				"Unable to select the database.",
-			  array("db_name"));
 
 	if(@$_POST['table_prefix'])
 		$prefix=$_POST['table_prefix']."_";
@@ -388,7 +371,6 @@ switch(@$_POST['step']) {
 
 	create_tables($prefix, $db_conn);
 
-	mysql_close($db_conn);
 ?>
 <body>
 <center>
@@ -439,8 +421,7 @@ You can now <a href="login.php" class="plain">start using Penny Pool</a>.
 			include_once('config.php');
 
 			$_POST = array();
-			$_POST['db_host'] = $db['host'];
-			$_POST['db_name'] = $db['db'];
+			$_POST['db_dsn'] = $db['dsn'];
 			if(@$db['prefix'])
 			{
 				$_POST['table_prefix'] = substr($db['prefix'], 0,
