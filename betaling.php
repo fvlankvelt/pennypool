@@ -64,13 +64,13 @@ mysql_free_result($res);
 $cal=new calendar("datum",@$info['datum']);
 $form = new form("betaling_eval.php", (@$update?true:false));
 
-?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN" 
+?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 <head>
 <link rel=stylesheet title="Penny Pool" href="style.css">
-<title><?=$title?></title>
-<? $cal->render_js(); ?>
+<title><?php=$title?></title>
+<?php $cal->render_js(); ?>
 <script language="JavaScript">
 function check_amount() {
   var elm=document.getElementById('bedrag')
@@ -94,32 +94,32 @@ function check_amount() {
   elm.value=parseInt(s[0])+'\.'+s[1]
 }
 function init() {
-<? $cal->render_js_init(); ?>
+<?php $cal->render_js_init(); ?>
 }
 </script>
 </head><body onload="init()">
-<h1 align=center><?=$title?></h1><?
+<h1 align=center><?php=$title?></h1><?php
 	$form->head();
 ?>
 <table align=center>
   <tr>
-    <td align=right><label for="bedrag"><?=__("bedrag")?>:</label></td>
+    <td align=right><label for="bedrag"><?php=__("bedrag")?>:</label></td>
     <td align=left>
       <input type=text size=8 name="bedrag" id="bedrag" class="credit"
-          value="<? echo @$info['bedrag']?$info['bedrag']:"0.00"; ?>" onchange="check_amount()">
+          value="<?php echo @$info['bedrag']?$info['bedrag']:"0.00"; ?>" onchange="check_amount()">
     </td>
   </tr>
   <tr>
-    <td align=right><label for="datum"><?=__("datum")?>:</label></td>
+    <td align=right><label for="datum"><?php=__("datum")?>:</label></td>
     <td align=left valign=top>
-<?  $cal->render_html();  ?>
+<?php  $cal->render_html();  ?>
     </td>
   </tr>
   <tr>
-    <td align=right><label for="van"><?=__("van")?>:</label></td>
+    <td align=right><label for="van"><?php=__("van")?>:</label></td>
     <td align=left>
       <select name="van">
-<?
+<?php
 	foreach($people as $id=>$nick) {
 		if(@$info['van']==$id)
 			echo "        <option value=\"$id\" selected>$nick</option>\n";
@@ -130,10 +130,10 @@ function init() {
     </td>
   </tr>
   <tr>
-    <td align=right><label for="naar"><?=__("aan")?>:</label></td>
+    <td align=right><label for="naar"><?php=__("aan")?>:</label></td>
     <td align=left>
       <select name="naar">
-<?
+<?php
 	foreach($people as $id=>$nick) {
 		if(@$info['naar']==$id)
 			echo "        <option value=\"$id\" selected>$nick</option>\n";
@@ -144,7 +144,7 @@ function init() {
     </td>
   </tr>
 </table><br>
-<?
+<?php
 	$form->foot();
 ?>
 </body></html>

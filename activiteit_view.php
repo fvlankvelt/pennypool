@@ -15,15 +15,15 @@ $res = mysql_query("SELECT act.act_id as act_id, act.name, act.date,".
 $activiteiten = parse_activiteiten($res);
 mysql_free_result($res);
 
-?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN" 
+?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 <head>
-<title><?=$title?></title>
+<title><?php=$title?></title>
 <link rel=stylesheet title="Penny Pool" href="style.css">
 </head>
 <body>
-<h1 align=center><?=__("Activiteit")?></h1>
+<h1 align=center><?php=__("Activiteit")?></h1>
 <table cellpadding=1 cellspacing=0 border=0 align=center>
 <tbody>
 
@@ -32,7 +32,7 @@ mysql_free_result($res);
 
 <table width="80%" align=center>
   <tr>
-    <td align=center><?
+    <td align=center><?php
 
 $button=new button("Close");
 $button->onclick="window.close()";

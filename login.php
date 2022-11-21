@@ -44,10 +44,10 @@ if(!file_exists('config.php')) {
 </head><body>
 <center><div style="width: 50%; border: 1pt solid black; padding: 8pt; text-align: left;">
 <h3 style="color: red;">Configuration Error</h3>
-The configuration file, <code>config.php</code>, is present but 
+The configuration file, <code>config.php</code>, is present but
 it is not readable by the webserver.
 </div></center>
-</body></html><?
+</body></html><?php
 
 exit();
 
@@ -92,22 +92,22 @@ exit();
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 <head>
-<title><?=__("Huisrekening Login")?></title>
+<title><?php=__("Huisrekening Login")?></title>
 <link rel=stylesheet title="Penny Pool" href="style.css">
 </head><body onload="document.getElementById('login').focus()">
-<h1 align=center><?=__("Huisrekening Login")?></h1>
+<h1 align=center><?php=__("Huisrekening Login")?></h1>
 <form method=post action="login.php">
 <table align=center>
   <tr>
-	<th align=right><label for=login><?=__("login")?>:</label></th>
-	<td><input type=text size=8 id='login' name=login value="<?=$login?>"></td>
+	<th align=right><label for=login><?php=__("login")?>:</label></th>
+	<td><input type=text size=8 id='login' name=login value="<?php=$login?>"></td>
   </tr>
   <tr>
-	<th align=right><label for=password><?=__("passwd")?>:</label></th>
+	<th align=right><label for=password><?php=__("passwd")?>:</label></th>
 	<td><input type=password size=8 id='password' name=passwd value=""></td>
   </tr>
 </table><br>
-<center><input type=submit value="login" onmouseover="this.setAttribute('class','hover')" 
+<center><input type=submit value="login" onmouseover="this.setAttribute('class','hover')"
 	onfocus="this.setAttribute('class','hover')" onmouseout="this.removeAttribute('class')"
 	onblur="this.removeAttribute('class')"></center>
 </form>

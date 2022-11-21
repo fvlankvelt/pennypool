@@ -1,4 +1,4 @@
-<?
+<?php
 /*
 	Huisrekening, a utility to share expenses among a group of friends
     Copyright (C) 2003-2005  Frank van Lankvelt <frnk@a-eskwadraat.nl>
@@ -34,14 +34,14 @@ function randstr($size)
                 else
                         $str.=chr($v-36+65+32);
         }
-        return $str;   
+        return $str;
 }
 
 /**
  * verwacht een db result
  *    act_id, name, afr_id, pers_id, credit
  * van alle deelnemers, gegroepeerd met
- *    act_id, name en afr_id 
+ *    act_id, name en afr_id
  */
 function parse_activiteiten($res)
 {

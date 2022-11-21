@@ -1,4 +1,4 @@
-<?
+<?php
 /*
 	Penny Pool, a utility to share expenses among a group of friends
     Copyright (C) 2003-2005  Frank van Lankvelt <frnk@a-eskwadraat.nl>
@@ -24,7 +24,7 @@ function create_tables($prefix, $conn)
 {
 	$tables = array(
 	"activiteiten" => array(
-		"base" => 
+		"base" =>
 <<<HEREDOC
   act_id int(11) NOT NULL auto_increment,
   name varchar(40) NOT NULL default '""',
@@ -61,7 +61,7 @@ HEREDOC
 		),
 
 	"deelnemers" => array(
-		"base" => 
+		"base" =>
 <<<HEREDOC
   act_id int(11) NOT NULL default '0',
   pers_id int(11) NOT NULL default '0',
@@ -173,15 +173,15 @@ function form($upgrade = false, $error = array(),
 <body>
 <center>
 <h1>Penny Pool Setup</h1>
-<?
+<?php
 	if(count($error)) {
 ?>
 <div style="width: 60%; align: center; background-color: white; color: red;
             border: 1pt solid #aaa; padding: 2pt;">
-<h2><?=$error['title']?></h2>
+<h2><?php=$error['title']?></h2>
 <p align=center style="font-size: small; color: red">
-<?=$error['explanation']?></p></div><br>
-<?
+<?php=$error['explanation']?></p></div><br>
+<?php
 	} else if($upgrade) {
 ?>
 <div style="width: 60%; align: center; background-color: white; border: 1pt solid #aaa;
@@ -190,7 +190,7 @@ function form($upgrade = false, $error = array(),
 Pool / Huisrekening has been detected.  An attempt will be made to upgrade
 automatically.  However, success is not guaranteed.  Please do not forget to
 make a backup of your existing data.</p></div><br>
-<?
+<?php
 	}
 ?>
 <form method=post action="setup.php">
@@ -200,9 +200,9 @@ make a backup of your existing data.</p></div><br>
 <h3>Database</h3>
 <table align=center>
   <tr>
-    <td align=right<? print_style("", $errs, "db_host");
+    <td align=right<?php print_style("", $errs, "db_host");
 		?>><label for="db_host">host:</label></td>
-    <td><input type=text name="db_host" id="db_host" size=16 value="<?
+    <td><input type=text name="db_host" id="db_host" size=16 value="<?php
 	if(@$_POST['db_host'])
 		echo $_POST['db_host'];
 	else
@@ -211,49 +211,49 @@ make a backup of your existing data.</p></div><br>
   </tr>
   <tr>
     <td colspan=2 style="padding-top: 8pt;">
-      <input type=radio name="db_exist" id="db_e_new" value="new"<? 
+      <input type=radio name="db_exist" id="db_e_new" value="new"<?php
 	if(!@$_POST['db_exist'] || @$_POST['db_exist']=='new')
 		echo " checked";
 ?>><label for="db_e_new">New Database</label><br>
-      <input type=radio name="db_exist" id="db_e_old" value="old"<?
+      <input type=radio name="db_exist" id="db_e_old" value="old"<?php
 	if(@$_POST['db_exist']=='old')
 		echo " checked";
 ?>><label for="db_e_old">Existing Database</label>
     </td>
   <tr>
-    <td align=right<? print_style("", $errs, "db_name");
+    <td align=right<?php print_style("", $errs, "db_name");
 		?>><label for="db_name">name:</label></td>
-    <td><input type=text name="db_name" id="db_name" size=16 value="<?
+    <td><input type=text name="db_name" id="db_name" size=16 value="<?php
 if(@$_POST['db_name'])
 	echo $_POST['db_name'];
 else
-	echo "pennypool"; 
+	echo "pennypool";
 ?>"></td>
   </tr>
 </table>
 </td><td valign=top width="45%" colspan=2 style="border: 1pt solid #aaa; padding: 4pt;">
 <h3>Database User</h3>
-<input type=radio name="user_exist" value="new"<? 
+<input type=radio name="user_exist" value="new"<?php
 if(!@$_POST['user_exist'] || @$_POST['user_exist']=='new')
 	echo " checked"; ?>>New User<br>
-<input type=radio name="user_exist" value="old"<?
+<input type=radio name="user_exist" value="old"<?php
 if(@$_POST['user_exist']=='old')
 	echo " checked"; ?>>Existing User<br>
 <table>
   <tr>
-    <td align=right<? print_style("", $errs, "user");
+    <td align=right<?php print_style("", $errs, "user");
 		?>><label for="user">user:</label></td>
-    <td><input type=text name="user" id="user" size=14 value="<?
+    <td><input type=text name="user" id="user" size=14 value="<?php
 if(@$_POST['user'])
 	echo $_POST['user'];
 else
-	echo "pennypool"; 
+	echo "pennypool";
 ?>"></td>
   </tr>
   <tr>
-    <td align=right<? print_style("", $errs, "pass");
+    <td align=right<?php print_style("", $errs, "pass");
 		?>><label for="pass">password:</label></td>
-    <td><input type=password name="pass" id="pass" size=8<?
+    <td><input type=password name="pass" id="pass" size=8<?php
 if(@$_POST['pass'])
 	echo " value=\"".$_POST['pass']."\"";
 ?>></td>
@@ -265,7 +265,7 @@ or alter them (when upgrading).</small>
 </td>
 <td valign=top width="25%" style="border: 1pt solid #aaa; padding: 4pt;">
   <h3>Table prefix</h3>
-prefix: <input type=text name="table_prefix" size=16 value="<?
+prefix: <input type=text name="table_prefix" size=16 value="<?php
 if(@$_POST['table_prefix'])
 	echo $_POST['table_prefix'];
 else
@@ -274,14 +274,14 @@ else
 </td> </tr>
 <tr><td colspan=2 style="border: 1pt solid #aaa; padding: 4pt;">
 <h3>Database root user</h3>
-<p align=center<? print_style("", $errs, "root_user"); ?>>
-user: <input type=text name="root_user" size=12 value="<?
+<p align=center<?php print_style("", $errs, "root_user"); ?>>
+user: <input type=text name="root_user" size=12 value="<?php
 if(@$_POST['root_user'])
 	echo $_POST['root_user'];
 else
-	echo "root"; 
+	echo "root";
 ?>">&nbsp;&nbsp;
-password: <input type=password name="root_pass" size=8<?
+password: <input type=password name="root_pass" size=8<?php
 if(@$_POST['root_pass'])
 	echo " value=\"".$_POST['root_pass']."\"";
 ?>><br><br>
@@ -291,11 +291,11 @@ or a new database user is used.</small>
 <td valign=top width="30%" colspan=2 style="border: 1pt solid #aaa; padding: 4pt;">
   <h3>Language</h3>
   <select name="lang">
-    <option value="nl"<?
+    <option value="nl"<?php
 		if(!@$_POST['lang'] || @$_POST['lang']=='nl')
 			echo " selected";
 	?>>Default (nl)</option>
-<?
+<?php
 	$dir=opendir("lang");
 	while($file=readdir($dir)) {
 		if(!ereg(".php", $file) || $file=="new_lang.php")
@@ -318,7 +318,7 @@ or a new database user is used.</small>
 </form>
 </center>
 </body></html>
-<?
+<?php
 	exit();
 }
 
@@ -326,7 +326,7 @@ or a new database user is used.</small>
 <title>Setup Penny Pool</title>
 <link rel=stylesheet title="Penny Pool" href="style.css">
 </head>
-<?
+<?php
 
 switch(@$_POST['step']) {
 	case 'create_tables':
@@ -385,7 +385,7 @@ switch(@$_POST['step']) {
 		$prefix=$_POST['table_prefix']."_";
 	else
 		$prefix="";
-	
+
 	create_tables($prefix, $db_conn);
 
 	mysql_close($db_conn);
@@ -400,13 +400,13 @@ information into <code>config.php</code> (in the directory where
 <em>Penny Pool</em> is installed):
 <pre>
 &lt;?php
- 	$db['host']="<?=$_POST['db_host']?>";
-	$db['db']="<?=$_POST['db_name']?>";
-	$db['prefix']="<?=$prefix?>";
-	$db['user']="<?=$_POST['user']?>";
-	$db['passwd']="<?=$_POST['pass']?>";
+ 	$db['host']="<?php=$_POST['db_host']?>";
+	$db['db']="<?php=$_POST['db_name']?>";
+	$db['prefix']="<?php=$prefix?>";
+	$db['user']="<?php=$_POST['user']?>";
+	$db['passwd']="<?php=$_POST['pass']?>";
 
-	$pp['lang']="<?=$_POST['lang']?>";
+	$pp['lang']="<?php=$_POST['lang']?>";
 
 </pre>
 
@@ -418,17 +418,17 @@ permissions, and may want to disable access to
     chmod 600 setup.php
 </pre>
 
-<? if($_POST['user_exist'] == 'new') { ?>
-You can now 
-<a href="login.php?login=user">start using Penny Pool</a>.  The 
+<?php if($_POST['user_exist'] == 'new') { ?>
+You can now
+<a href="login.php?login=user">start using Penny Pool</a>.  The
 login "user" has been created, with no password.
-<? } else { ?>
+<?php } else { ?>
 You can now <a href="login.php" class="plain">start using Penny Pool</a>.
-<? } ?>
+<?php } ?>
 </div>
 </center>
 </body></html>
-<?
+<?php
 	break;
 	default:
 		$upgrade=false;

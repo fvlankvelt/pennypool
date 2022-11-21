@@ -37,24 +37,24 @@ class calendar {
 			$this->value=$value;
 		$this->prefix=$prefix;
 	}
-	
+
 	function render_js() {
-		if(!$GLOBALS['_lib_cal_jslib_written']) 
+		if(!$GLOBALS['_lib_cal_jslib_written'])
 			$this->render_js_lib();
 		$prefix=$this->prefix;
 	}
 
 	function render_js_init() {
 ?>
-  new calendar('<?=$this->prefix?>','<?=$this->value?>')
-<?
+  new calendar('<?php=$this->prefix?>','<?php=$this->value?>')
+<?php
 	}
 
 	function render_js_lib() {
 		$GLOBALS['_lib_cal_jslib_written']=true;
 ?>
 <script language="JavaScript">
-calendar=function(prefix,date) { 
+calendar=function(prefix,date) {
   var date_ar=date.split(/-/)
 
   this.prefix=prefix
@@ -187,7 +187,7 @@ calendar.prototype.days=function() {
 calendar.prototype.set_input=function(day) {
   var d=day
   var m=this.month+1
-  
+
   if(d<10)
     d='0'+d
   if(m<10)
@@ -242,20 +242,20 @@ function cal_parseInt(s) {
 }
 
 </script>
-<?  }
+<?php  }
 
-	function render_html() { 
+	function render_html() {
 		$prefix=$this->prefix; ?>
 <!-- Start Kalender -->
-<div style="position: absolute; border: 0px; overflow: hidden; height: 18px; 
-    width: 108px; z-index: 10;" id='<?=$prefix?>container'>
-<input type=text id='<?=$prefix?>date' name="<?=$this->field?>" size=12 
-    style="font-size: 80%; height: 18px;" value="<?=$this->value?>">
-<div id="<?=$prefix?>popup" style="position: absolute; height: 98px; 
+<div style="position: absolute; border: 0px; overflow: hidden; height: 18px;
+    width: 108px; z-index: 10;" id='<?php=$prefix?>container'>
+<input type=text id='<?php=$prefix?>date' name="<?php=$this->field?>" size=12
+    style="font-size: 80%; height: 18px;" value="<?php=$this->value?>">
+<div id="<?php=$prefix?>popup" style="position: absolute; height: 98px;
     border: 1px solid; width: 106px; top: 18px; left: 0px;
     background-color: #eeeeee; font-size: 6px; text-align: center;">
-<a id="<?=$prefix?>prev">&lt;&lt;</a>&nbsp;<span id='<?=$prefix?>head'></span>&nbsp;<a id="<?=$prefix?>next">&gt;&gt;</a>
-<table id='<?=$prefix?>table' border=0 cellspacing=0 width="90"
+<a id="<?php=$prefix?>prev">&lt;&lt;</a>&nbsp;<span id='<?php=$prefix?>head'></span>&nbsp;<a id="<?php=$prefix?>next">&gt;&gt;</a>
+<table id='<?php=$prefix?>table' border=0 cellspacing=0 width="90"
     cellpadding=0 align=center style="font-size: 8pt;">
   <tr>
     <th class=cal>z</th>
@@ -266,7 +266,7 @@ function cal_parseInt(s) {
     <th class=cal>v</th>
     <th class=cal>z</th>
   </tr>
-<?
+<?php
 for($i=0;$i<6;$i++) {
 	echo "  <tr>\n";
 	for($j=0;$j<7;$j++) {
@@ -277,5 +277,5 @@ for($i=0;$i<6;$i++) {
 ?></table></div>
 </div>
 <!-- Eind  Kalender -->
-<?	}
+<?php	}
 }

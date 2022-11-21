@@ -52,19 +52,19 @@ $popup->head();
 $form->head();
 
 if(@$pers_id) { ?>
-<input type=hidden name=pers_id value="<?=$pers_id?>">
-<? } ?>
+<input type=hidden name=pers_id value="<?php=$pers_id?>">
+<?php } ?>
 <table align=center>
   <tr>
-	<td align=right><label for="nick"><?=__("naam")?>:</label></td>
-	<td align=left><input type=text name="nick" size=8 value="<?=@$info['nick']?>"></td>
+	<td align=right><label for="nick"><?php=__("naam")?>:</label></td>
+	<td align=left><input type=text name="nick" size=8 value="<?php=@$info['nick']?>"></td>
   </tr>
   <tr>
-	<td align=right><label for="rekeningnr"><?=__("rekeningnr")?>:</label></td>
-	<td align=left><input type=text name="rekeningnr" size=9 value="<?=@$info['rekeningnr']?>"></td>
+	<td align=right><label for="rekeningnr"><?php=__("rekeningnr")?>:</label></td>
+	<td align=left><input type=text name="rekeningnr" size=9 value="<?php=@$info['rekeningnr']?>"></td>
   </tr>
 </table><br>
-<?
+<?php
 
 $form->foot();
 $popup->foot();

@@ -185,28 +185,28 @@ mysql_free_result($res);
 $cal = new calendar("date", $date);
 $form = new form("afrekening_eval.php", (@$afr_id?true:false));
 
-?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN" 
+?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 <head>
 <link rel=stylesheet title="Penny Pool" href="style.css">
-<title><?=$title?></title>
-<?
+<title><?php=$title?></title>
+<?php
 	$cal->render_js();
 ?>
 <script language="JavaScript">
 deelnemers=new Array()
-<?
+<?php
 	foreach($all_acts as $act_id => $act)
 	{	?>
-deelnemers[<?=$act_id?>]=new Array()
-<?	}
+deelnemers[<?php=$act_id?>]=new Array()
+<?php	}
 	foreach($deelnemers as $act_id => $participants)
 	{
 		foreach($participants as $deeln)
 		{	?>
-deelnemers[<?=$act_id?>][<?=$deeln['id']?>]=<?=$deeln['credit']."\n"?>
-<?		}
+deelnemers[<?php=$act_id?>][<?php=$deeln['id']?>]=<?php=$deeln['credit']."\n"?>
+<?php		}
 	}
 
 /* Persons */
@@ -321,7 +321,7 @@ active_row.prototype.uncheck=function() {
   this.enabled=false
   this.chk.checked=false
   update_total()
-} 
+}
 
 function init() {
   activiteit=new Array()
@@ -335,22 +335,22 @@ function init() {
   }
 
   update_total()
-<?	$cal->render_js_init(); ?>
+<?php	$cal->render_js_init(); ?>
 }
 </script>
 </head><body onload="javascript:init()" style="margin-left: 0px; margin-right: 0px;">
-<h1 align=center><?=$title?></h1>
+<h1 align=center><?php=$title?></h1>
 <form id='form' method=post action="afrekening_eval.php">
 <input type=hidden id='action' name=action value="default">
-<?  if(@$afr_id) { ?>
-<input type=hidden name=afr_id value="<?=$afr_id?>">
-<? }
+<?php  if(@$afr_id) { ?>
+<input type=hidden name=afr_id value="<?php=$afr_id?>">
+<?php }
 
 ?><table cellpadding=1 cellspacing=0 border=0 align=center>
 <tr>
-  <td align=right><label for="date"><?=__("datum")?>:</label></td>
+  <td align=right><label for="date"><?php=__("datum")?>:</label></td>
   <td class="disabled" valign=top style="width: 80px;">
-<? $cal->render_html(); ?>
+<?php $cal->render_html(); ?>
   </td>
 </tr>
 </table><br>
@@ -362,9 +362,9 @@ function init() {
 <!-- Start Activiteiten -->
 <table width="95%" cellspacing=0 cellpadding=2 style="border: 1px solid black;" align=center>
   <tr>
-    <th width="100%"><?=__("activiteit")?></th>
+    <th width="100%"><?php=__("activiteit")?></th>
   </tr>
-<? 
+<?php
 
 	for($i = 0; $i < count($all_acts); $i++)
 	{
@@ -372,23 +372,23 @@ function init() {
 ?>
   <tr style="background-color: #ffffff;">
     <td>
-      <input type=checkbox id='act_<?=$i?>' name='activiteiten[]' value='<?=$activiteit['act_id']?>'<?
+      <input type=checkbox id='act_<?php=$i?>' name='activiteiten[]' value='<?php=$activiteit['act_id']?>'<?php
 
-	if(!is_array(@$info['activiteiten']) || 
+	if(!is_array(@$info['activiteiten']) ||
 			in_array($activiteit['act_id'], $info['activiteiten']))
 		echo " checked";
 
-?>>&nbsp;<?=$activiteit['name']?></input>
+?>>&nbsp;<?php=$activiteit['name']?></input>
     </td>
   </tr>
-<?  }
+<?php  }
 
 ?>
 </table>
-<? if(@$afr_id) { ?>
+<?php if(@$afr_id) { ?>
     <p align=center><a href="javascript:void(0);"
-      onclick="javascript:window.opener.location='afrekening_view.php?afr_id=<?=$afr_id?>';">[ <?=__("overzicht in hoofdscherm")?> ]</a>
-<? } ?>
+      onclick="javascript:window.opener.location='afrekening_view.php?afr_id=<?php=$afr_id?>';">[ <?php=__("overzicht in hoofdscherm")?> ]</a>
+<?php } ?>
 <!-- Eind Activiteiten -->
 
   </td>
@@ -397,34 +397,34 @@ function init() {
 <!-- Start Betalingen -->
 <table width="95%" cellspacing=0 cellpadding=2 style="border: 1px solid black;" align=center>
   <tr>
-    <th colspan=5><?=__("betalingen")?></th>
+    <th colspan=5><?php=__("betalingen")?></th>
   </tr>
   <tr>
     <td>&nbsp;</td>
-    <th align=center><?=__("van")?></th>
-    <th align=center><?=__("aan")?></th>
-    <th align=center><?=__("datum")?></th>
+    <th align=center><?php=__("van")?></th>
+    <th align=center><?php=__("aan")?></th>
+    <th align=center><?php=__("datum")?></th>
     <td>&nbsp;</td>
   </tr>
-<?
+<?php
 	for($i = 0; $i < count($betalingen); $i++)
 	{
 		$item = $betalingen[$i];
 		?>
   <tr>
     <td>
-      <input type=checkbox id='betid_<?=$i?>' name='betalingen[]' value=<?
+      <input type=checkbox id='betid_<?php=$i?>' name='betalingen[]' value=<?php
 	echo "\"".$item['van'].":".$item['naar'].":".$item['datum']."\"";
 	if($item['checked'])
 		echo " checked";
 ?>></input>
     </td>
-    <td align=center><?=$persons[$pers_reverse[$item['van']]]['nick']?></td>
-    <td align=center><?=$persons[$pers_reverse[$item['naar']]]['nick']?></td>
-    <td align=center><?=display_datum($item['datum'])?></td>
-    <td align=right><?=$item['bedrag']?></td>
+    <td align=center><?php=$persons[$pers_reverse[$item['van']]]['nick']?></td>
+    <td align=center><?php=$persons[$pers_reverse[$item['naar']]]['nick']?></td>
+    <td align=center><?php=display_datum($item['datum'])?></td>
+    <td align=right><?php=$item['bedrag']?></td>
   </tr>
-		<?
+		<?php
 	} ?>
 </table>
 <!-- Eind Betalingen -->
@@ -434,19 +434,19 @@ function init() {
 <!-- Start Balans -->
 <table width="95%" cellspacing=0 cellpadding=2 style="border: 1px solid black;" align=center>
   <tr>
-    <th colspan=2><?=__("balans")?></th>
+    <th colspan=2><?php=__("balans")?></th>
   </tr>
-<?
+<?php
 	$i = 0;
 	foreach($persons as $person)
 	{	?>
   <tr style="background-color: white;">
-    <td style="padding-left: 10px;"><?=$person['nick']?></td>
+    <td style="padding-left: 10px;"><?php=$person['nick']?></td>
     <td style="text-align: right; padding-right: 10px;" class="input">
-      <input type=text size=8 value="0.00" class="debet" id='pers_<?=$i?>_debet' disabled>
+      <input type=text size=8 value="0.00" class="debet" id='pers_<?php=$i?>_debet' disabled>
     </td>
   </tr>
-<?
+<?php
 		$i++;
 	}
 ?>
@@ -456,7 +456,7 @@ function init() {
 </td></tr>
 </table>
 
-<?
+<?php
 	if($form->delete)
 		$form->delete->value = "delete afrekening";
 	$form->foot();

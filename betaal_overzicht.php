@@ -70,14 +70,14 @@ while($i<$num_aan || $i<$num_van) {
 mysql_free_result($res_aan);
 mysql_free_result($res_van);
 
-?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN" 
+?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 <head>
-<title><?=__("Betalingen")?></title>
+<title><?php=__("Betalingen")?></title>
 <link rel=stylesheet title="Penny Pool" href="style.css">
 <script language="JavaScript">
-<?
+<?php
 echo "var van=new Array(";
 for($i=0;$i<$num_van;$i++) {
 	if($i!=0)
@@ -102,7 +102,7 @@ function popup(link) {
 }
 function init() {
   document.getElementById('close').focus()
-  for(var i=0;i<<?=$num_aan?>;i++) {
+  for(var i=0;i<<?php=$num_aan?>;i++) {
     var obj=new Object();
     obj.date=document.getElementById('aan_'+i+'_date')
     obj.who=document.getElementById('aan_'+i+'_who')
@@ -132,7 +132,7 @@ function init() {
       obj.amount.style.backgroundColor='#ffffff'
   }
 
-  for(var i=0;i<<?=$num_van?>;i++) {
+  for(var i=0;i<<?php=$num_van?>;i++) {
     var obj=new Object();
     obj.date=document.getElementById('van_'+i+'_date')
     obj.who=document.getElementById('van_'+i+'_who')
@@ -165,17 +165,17 @@ function init() {
 </script>
 </head>
 <body onload="init()">
-<h1 align=center><?=__("Betalingen")?></h1>
+<h1 align=center><?php=__("Betalingen")?></h1>
 <table align=center cellspacing=0 cellpadding=2 width="80%" style="border: 1px solid black;">
   <tr>
-    <th><?=__("datum")?></th>
-    <th><?=__("aan")?></th>
-    <th style="border-right: 1px solid black;"><?=__("bedrag")?></th>
-    <th><?=__("datum")?></th>
-    <th><?=__("van")?></th>
-    <th><?=__("bedrag")?></th>
+    <th><?php=__("datum")?></th>
+    <th><?php=__("aan")?></th>
+    <th style="border-right: 1px solid black;"><?php=__("bedrag")?></th>
+    <th><?php=__("datum")?></th>
+    <th><?php=__("van")?></th>
+    <th><?php=__("bedrag")?></th>
   </tr>
-<?
+<?php
 $i=0;
 while($i<$num_aan || $i<$num_van) {
 	if($i<$num_aan) {
@@ -204,10 +204,10 @@ while($i<$num_aan || $i<$num_van) {
 }
 ?>
 </table>
-<p align=center><a href="javascript:popup('betaling.php')"><?=__("nieuwe betaling")?></a>
+<p align=center><a href="javascript:popup('betaling.php')"><?php=__("nieuwe betaling")?></a>
 </p>
 <form><p align=center>
-<?
+<?php
 	$button = new button("close");
 	$button->id = "close";
 	$button->onclick = "window.opener.location='index.php';window.close()";

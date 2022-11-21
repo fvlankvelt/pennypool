@@ -83,17 +83,17 @@ class form
 	function head()
 	{	?>
 <!-- Start Form Header -->
-<form id='form' method=post action="<?=$this->next?>">
-<input type=hidden name=action id='action' value='<?=$this->action?>'>
+<form id='form' method=post action="<?php=$this->next?>">
+<input type=hidden name=action id='action' value='<?php=$this->action?>'>
 <!-- Eind Form Header -->
-<?  }
+<?php  }
 
 	function foot()
 	{ ?>
 <!-- Start Form Footer -->
 <table width="80%" align=center>
   <tr>
-<?
+<?php
 		if($this->delete)
 		{
 			echo "    <td>\n";
@@ -110,7 +110,7 @@ class form
 </table>
 </form>
 <!-- Eind Form Footer -->
-<?
+<?php
 	}
 }
 
@@ -127,19 +127,19 @@ class popup
 
 	function head()
 	{
-?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN" 
+?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 <head>
 <link rel=stylesheet title="Penny Pool" href="style.css">
-<title><?=$this->title?></title>
+<title><?php=$this->title?></title>
 </head><body>
-<h1 align=center><?=$this->title?></h1>
-<?	}
+<h1 align=center><?php=$this->title?></h1>
+<?php	}
 
 	function foot()
 	{
-?></body></html><?
+?></body></html><?php
 	}
 }
 
@@ -168,22 +168,22 @@ class popup_eval
 
 	function render_ok()
 	{
-?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN" 
+?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
-<head><title><?=$this->title?></title>
+<head><title><?php=$this->title?></title>
 <link rel=stylesheet title="Penny Pool" href="style.css">
 <script>
 function init() {
   if(window.opener)
-    window.opener.location='<?=$this->opener?>'
+    window.opener.location='<?php=$this->opener?>'
   window.close()
 }
 </script>
 </head><body onload="init()">
-</body></html><?
+</body></html><?php
 	}
-	
+
 	function render_error($vars)
 	{
 		$back = new button('back', 'submit');
@@ -192,28 +192,28 @@ function init() {
 		$cancel = new button('cancel');
 		$cancel->onclick = "window.close()";
 
-?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN" 
+?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 <head><title>Error</title>
 <link rel=stylesheet title="Penny Pool" href="style.css">
 </head>
 <body onload="document.getElementById('back').focus()">
-<h1 class="error" align=center><?=__("Ongeldige data")?></h1>
-<? if($this->error) { ?>
-<p align=center><font color=red><?=$this->error?></font></p>
-<? } ?>
-<form action="<?=$this->form?>" method=post><?
+<h1 class="error" align=center><?php=__("Ongeldige data")?></h1>
+<?php if($this->error) { ?>
+<p align=center><font color=red><?php=$this->error?></font></p>
+<?php } ?>
+<form action="<?php=$this->form?>" method=post><?php
 		foreach($vars as $key => $val)
 		{
 			echo "<input type=hidden name=\"$key\" value=\"$val\">\n";
 		}
-?><center><?
+?><center><?php
 		$back->render();
 		echo "&nbsp;&nbsp;";
 		$cancel->render();
 ?></center>
 </form>
-</body></html><?
+</body></html><?php
 	}
 }
