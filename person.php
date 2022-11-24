@@ -19,10 +19,16 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-
+require_once 'vendor/autoload.php';
+use \Doctrine\DBAL\ParameterType;
 
 require_once("pennypool.php");
 include_once("lib_layout.php");
+
+/**
+ * @var Doctrine\DBAL\Connection $dbh
+ */
+global $dbh, $pp;
 
 if(!@$_POST && !@$_GET) {
 	$title=__("Nieuw persoon");
@@ -30,13 +36,13 @@ if(!@$_POST && !@$_GET) {
 } else if (@$_GET['pers_id']) {
 	$title=__("Persoon bewerken");
 	$pers_id=$_GET['pers_id'];
-	$res=mysql_query("SELECT * FROM ".$db['prefix']."mensen ".
-					 "WHERE pers_id=".$_GET['pers_id'],$db_conn);
-	$info=mysql_fetch_assoc($res);
+	$res = $dbh->executeQuery(
+		"SELECT * FROM mensen WHERE pers_id=?",
+		[$_GET['pers_id']], [ParameterType::STRING]);
+	$info=$res->fetchAssociative();
 	$info['passwd2']=$info['password']="";
 	if(!@$info['lang'])
 		$info['lang']=@$pp['lang'];
-	mysql_free_result($res);
 } else {
 	if(@$_POST['pers_id']) {
 		$title=__("Persoon bewerken");
