@@ -177,9 +177,9 @@ function form($upgrade = false, $error = array(),
 ?>
 <div style="width: 60%; align: center; background-color: white; color: red;
             border: 1pt solid #aaa; padding: 2pt;">
-<h2><?php=$error['title']?></h2>
+<h2><?= $error['title'] ?></h2>
 <p align=center style="font-size: small; color: red">
-<?php=$error['explanation']?></p></div><br>
+<?= $error['explanation'] ?></p></div><br>
 <?php
 	} else if($upgrade) {
 ?>
@@ -287,7 +287,7 @@ or a new database user is used.</small>
 <?php
 	$dir=opendir("lang");
 	while($file=readdir($dir)) {
-		if(!preg(".php", $file) || $file=="new_lang.php")
+		if(!preg_match(".php", $file) || $file=="new_lang.php")
 			continue;
 		$lang=preg_replace("(.*).php","\\1",$file);
 		echo "    <option value=\"$lang\"";
