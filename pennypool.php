@@ -63,13 +63,18 @@ class people {
 		}
 	}
 
+	/**
+	 * @param integer[]|null $id
+	 * @return array|false|mixed|mixed[]
+	 * @throws \Doctrine\DBAL\Exception
+	 */
 	function find($id = null) {
 		global $dbh;
 
 		if(is_array(@$id)) {
 			$find=array();
 			foreach($id as $i) {
-				if(!@$this->cache[$i])
+				if(!isset($this->cache[$i]))
 					$find[]=$i;
 			}
 			if(count($find)>0) {
@@ -90,6 +95,8 @@ class people {
 			}
 			return $ret;
 		} else if(@$id) {
+			return ($this->find([$id]))[0];
+			/*
 			if(!@$this->cache[$id]) {
 				$res = $dbh->executeQuery(
 					"SELECT * FROM mensen WHERE pers_id=?",
@@ -100,6 +107,7 @@ class people {
 				$this->_order();
 			}
 			return $this->cache[$id];
+			*/
 		} else {
 			$res = $dbh->executeQuery("SELECT * FROM mensen ORDER BY type, nick ASC");
 			$ret=array();
@@ -117,15 +125,21 @@ class people {
 	}
 
 	function _cmp($a,$b) {
-		return strcmp($a['nick'],$b['nick']);
+		return strcmp($b['nick'],$a['nick']);
 	}
 }
 
-function amount_to_html($amount): string
+function amount_to_str(float $amount): string
 {
 	if(!$amount || abs($amount)<.005)
 		return "0.00";
 	$amount_str = sprintf("%.2f", $amount);
+	return $amount_str;
+}
+
+function amount_to_html(float $amount): string
+{
+	$amount_str = amount_to_str($amount);
 	if($amount<0) {
 		return "<font color=red>$amount_str</font>";
 	} else {
@@ -164,7 +178,7 @@ function select_language($lng = "")
 	global $pp;
 
 	if($lng == 'nl')
-		$lang_data=array();
+		$lang_data=null;
 	else if($lng != '' && file_exists("lang/".$lng.".php"))
 		include_once("lang/".$lng.".php");
 	else if(isset($pp['lang']) && file_exists("lang/".$pp['lang'].".php"))
@@ -179,8 +193,15 @@ function __($txt)
 {
 	global $lang_data;
 
-	if(@$lang_data[$txt])
+	/* check whether we're using the default language */
+	if ($lang_data==null)
+		return $txt;
+
+	if (isset($lang_data[$txt]))
 		return $lang_data[$txt];
+	else
+		trigger_error("Missing translation for '$txt'", E_USER_WARNING);
+
 	return $txt;
 }
 
