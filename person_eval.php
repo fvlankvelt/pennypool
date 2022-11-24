@@ -64,7 +64,7 @@ if(check_post_vars(&$popup)) {
 				$_SESSION['login']=$info['nick'];
 				$_SESSION['lang']=$info['lang'];
 			}
-			$passwd=addSlashes(crypt($info['password'],randstr(2)));
+			$passwd_hash = $passwd_hash($info['password'],  PASSWORD_ARGON2ID);
 			$res=mysql_query("UPDATE ".$db['prefix']."mensen SET ".
 						 "voornaam='".$info['voornaam']."',".
 						 "achternaam='".$info['achternaam']."',".
@@ -73,7 +73,7 @@ if(check_post_vars(&$popup)) {
 						 "rekeningnr='".$info['rekeningnr']."',".
 						 "lang='".$info['lang']."'".
 						 ($info['password']!=''?
-						  	",password='$passwd' ":" ").
+						  	",password='$passwd_hash' ":" ").
 						 "WHERE pers_id=".$_POST['pers_id'],$db_conn);
 		}
 		else
@@ -125,7 +125,7 @@ if(check_post_vars(&$popup)) {
 
 	$popup->render_ok();
 
-} else { 
+} else {
 
 	$popup->render_error($_POST);
 }

@@ -20,6 +20,11 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+require_once 'vendor/autoload.php';
+
+use \Doctrine\DBAL\DriverManager;
+use \Doctrine\DBAL\ParameterType;
+
 // select default language
 if(isset($pp['lang']))
 	include_once("lang/".$pp['lang'].".php");
@@ -57,35 +62,37 @@ exit();
 
 	include_once('config.php');
 
-	$dbh=new PDO($db['dsn'],$db['user'],$db['passwd']);
+	$conn_params = ['url' => $db['url']];
+	$db_conn = DriverManager::getConnection($conn_params);
 
-	$sth=$dbh->query("SELECT * from ".$db['prefix']."mensen WHERE ".
-			"nick='$login' and password=encrypt('$passwd',".
-				"substring(password,1,2)) LIMIT 1");
-	if($sth && $sth->rowCount()==1) {
-		$row=$sth->fetch();
-		unset($passwd);
-		session_start();
-		// $login variable could be overridden by session,
-		// when register_globals is on in php.ini
-		$_SESSION['login']=addSlashes($_POST['login']);
-		$_SESSION['lang']=@$row['lang'];
+	$sth = $db_conn->executeQuery("SELECT * from mensen WHERE nick=? LIMIT 1",
+		[$login], [ParameterType::STRING]);
+	foreach ($sth->fetchAllAssociative() as $row) {
+		if ($row['password']===null or password_verify($row['password'], $passwd))
+		{
+			unset($passwd);
+			session_start();
+			// $login variable could be overridden by session,
+			// when register_globals is on in php.ini
+			$_SESSION['login']=addSlashes($login);
+			$_SESSION['lang']=$row['lang'];
 
-		session_write_close();
-		header("HTTP/1.1 301 Moved Permanently");
-		header("Location: index.php");
-		exit();
-	} else {
-		sleep(1);
-		$passwd="";
+			session_write_close();
+			header("HTTP/1.1 301 Moved Permanently");
+			header("Location: index.php");
+			exit();
+		}
+		/* TODO: should probably show an error here */
+		$login=$_GET['login'];
 	}
+	sleep(1);
 } else if(@$_GET['login']) {
 	$login=$_GET['login'];
-	$passwd="";
 } else {
 	$login="";
-	$passwd="";
-} ?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
+}
+$passwd="";
+?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 <head>

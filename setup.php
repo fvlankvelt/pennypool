@@ -73,7 +73,7 @@ function create_tables(\Doctrine\DBAL\Connection $conn)
 	$table_mns->addColumn("rekeningnr", "string", ["length" => 9, "notnull" => true, "default" => ""]);
 	$table_mns->addColumn("nick", "string", ["length" => 10, "notnull" => true, "default" => ""]);
 	$table_mns->addColumn("email", "string", ["length" => 40, "notnull" => true, "default" => ""]);
-	$table_mns->addColumn("password", "string", ["length" => 16, "notnull" => true, "default" => ""]);
+	$table_mns->addColumn("password", "string", ["length" => 128, "notnull" => false, "default" => "!"]);
 	$table_mns->addColumn("type", "string", ["length" => 20, "notnull" => true, "default" => "person"]);
 	$table_mns->addColumn("lang", "string", ["length" => 5, "notnull" => true, "default" => "en"]);
 	$table_mns->setPrimaryKey(["pers_id"]);
@@ -106,7 +106,9 @@ function create_tables(\Doctrine\DBAL\Connection $conn)
 	/* add default user */
 	$cnt = $conn->prepare("SELECT COUNT() FROM `mensen`;")->executeQuery()->fetchOne();
 	if ($cnt===0) {
-		$conn->prepare("INSERT INTO `mensen` (`pers_id`,`voornaam`,`nick`) VALUES (1,'User','user')")->executeQuery();
+		$conn->prepare(
+			"INSERT INTO `mensen` (`pers_id`,`voornaam`,`nick`,`password`) VALUES (1,'User','user',null)"
+		)->executeQuery();
 	}
 
 }

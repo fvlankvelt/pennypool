@@ -78,7 +78,7 @@ if(@$pers_id) { ?>
   </tr>
   <tr>
     <td align=right><label for="password"><?=__("passwd")?><font color=red>*</font>:</label></td>
-    <td align=left><input type=password name="password" size=8 value="<?=@$info['password']?>"></td>
+    <td align=left><input type=password name="password" size=16 value="<?=@$info['password']?>"></td>
   </tr>
   <tr>
     <td align=right><label for="passwd2"><?=__("re-type")?>:</label></td>
