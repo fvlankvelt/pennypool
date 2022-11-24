@@ -46,7 +46,7 @@ global $db, $login, $people, $dbh;
 class people {
 	var $cache=array();
 
-	function people() {
+	function __construct() {
 		$this->cache=array();
 	}
 

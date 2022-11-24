@@ -29,7 +29,7 @@ class button
 	var $id = null;
 	var $onclick = null;
 
-	function button($value, $type = 'button')
+	function __construct($value, $type = 'button')
 	{
 		$this->value = $value;
 		$this->type = $type;
@@ -57,7 +57,7 @@ class form
 
 	var $action;
 
-	function form($next, $delete = true)
+	function __construct($next, $delete = true)
 	{
 		$this->next = $next;
 
@@ -118,7 +118,7 @@ class popup
 {
 	var $title;
 
-	function popup($title = "")
+	function __construct($title = "")
 	{
 		if(!$title)
 			$title = __("Penny Pool");
@@ -151,7 +151,7 @@ class popup_eval
 
 	var $error = null;
 
-	function popup_eval($title, $form, $location = null)
+	function __construct($title, $form, $location = null)
 	{
 		$this->title = $title;
 		$this->form = $form;

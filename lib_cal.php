@@ -29,7 +29,7 @@ class calendar {
 	var $field='';
 	var $value='';
 
-	function calendar($field,$value='',$prefix='cal_') {
+	function __construct($field,$value='',$prefix='cal_') {
 		$this->field=$field;
 		if(!$value)
 			$this->value=date('d-n-Y');
