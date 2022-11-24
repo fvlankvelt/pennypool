@@ -89,18 +89,18 @@ exit();
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 <head>
-<title><?php=__("Huisrekening Login")?></title>
+<title><?=__("Huisrekening Login")?></title>
 <link rel=stylesheet title="Penny Pool" href="style.css">
 </head><body onload="document.getElementById('login').focus()">
-<h1 align=center><?php=__("Huisrekening Login")?></h1>
+<h1 align=center><?=__("Huisrekening Login")?></h1>
 <form method=post action="login.php">
 <table align=center>
   <tr>
-	<th align=right><label for=login><?php=__("login")?>:</label></th>
-	<td><input type=text size=8 id='login' name=login value="<?php=$login?>"></td>
+	<th align=right><label for=login><?=__("login")?>:</label></th>
+	<td><input type=text size=8 id='login' name=login value="<?=$login?>"></td>
   </tr>
   <tr>
-	<th align=right><label for=password><?php=__("passwd")?>:</label></th>
+	<th align=right><label for=password><?=__("passwd")?>:</label></th>
 	<td><input type=password size=8 id='password' name=passwd value=""></td>
   </tr>
 </table><br>

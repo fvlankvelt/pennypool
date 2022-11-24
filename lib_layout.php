@@ -83,8 +83,8 @@ class form
 	function head()
 	{	?>
 <!-- Start Form Header -->
-<form id='form' method=post action="<?php=$this->next?>">
-<input type=hidden name=action id='action' value='<?php=$this->action?>'>
+<form id='form' method=post action="<?=$this->next?>">
+<input type=hidden name=action id='action' value='<?=$this->action?>'>
 <!-- Eind Form Header -->
 <?php  }
 
@@ -132,9 +132,9 @@ class popup
 <html>
 <head>
 <link rel=stylesheet title="Penny Pool" href="style.css">
-<title><?php=$this->title?></title>
+<title><?=$this->title?></title>
 </head><body>
-<h1 align=center><?php=$this->title?></h1>
+<h1 align=center><?=$this->title?></h1>
 <?php	}
 
 	function foot()
@@ -171,12 +171,12 @@ class popup_eval
 ?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
-<head><title><?php=$this->title?></title>
+<head><title><?=$this->title?></title>
 <link rel=stylesheet title="Penny Pool" href="style.css">
 <script>
 function init() {
   if(window.opener)
-    window.opener.location='<?php=$this->opener?>'
+    window.opener.location='<?=$this->opener?>'
   window.close()
 }
 </script>
@@ -199,11 +199,11 @@ function init() {
 <link rel=stylesheet title="Penny Pool" href="style.css">
 </head>
 <body onload="document.getElementById('back').focus()">
-<h1 class="error" align=center><?php=__("Ongeldige data")?></h1>
+<h1 class="error" align=center><?=__("Ongeldige data")?></h1>
 <?php if($this->error) { ?>
-<p align=center><font color=red><?php=$this->error?></font></p>
+<p align=center><font color=red><?=$this->error?></font></p>
 <?php } ?>
-<form action="<?php=$this->form?>" method=post><?php
+<form action="<?=$this->form?>" method=post><?php
 		foreach($vars as $key => $val)
 		{
 			echo "<input type=hidden name=\"$key\" value=\"$val\">\n";

@@ -28,7 +28,7 @@ require_once("lib_util.php");
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 <head>
-<title><?php=__("Huisrekening")?></title>
+<title><?=__("Huisrekening")?></title>
 <link rel=stylesheet title="Penny Pool" href="style.css">
 <script type="text/javascript" language="JavaScript1.2">
 function popup(link) {
@@ -70,16 +70,16 @@ $me=my_data();
       <table align=center cellpadding=5 cellspacing=0>
         <tr>
           <td align=right valign=top style="padding: 0px 10px 0px 10px;">
-            <nobr><b><?php=__("Nieuw")?>:</b>
-            [&nbsp;<a href="javascript:popup('person.php')"><?php=__("persoon")?></a>&nbsp;]
-            [&nbsp;<a href="javascript:popup('account.php')"><?php=__("rekening")?></a>&nbsp;]
+            <nobr><b><?=__("Nieuw")?>:</b>
+            [&nbsp;<a href="javascript:popup('person.php')"><?=__("persoon")?></a>&nbsp;]
+            [&nbsp;<a href="javascript:popup('account.php')"><?=__("rekening")?></a>&nbsp;]
             </nobr>
           </td>
         </tr>
         <tr>
           <td align=right valign=top style="padding: 0px 10px 0px 10px;">
-            <nobr>[&nbsp;<a href="javascript:popup('person.php?pers_id=<?php=$me['pers_id']?>')"><?php=__("mijn gegevens")?></a>&nbsp;]
-            [&nbsp;<a href="logout.php"><?php=__("logout")?></a>&nbsp;]
+            <nobr>[&nbsp;<a href="javascript:popup('person.php?pers_id=<?=$me['pers_id']?>')"><?=__("mijn gegevens")?></a>&nbsp;]
+            [&nbsp;<a href="logout.php"><?=__("logout")?></a>&nbsp;]
             </nobr>
           </td>
         </tr>
@@ -90,8 +90,8 @@ $me=my_data();
 
 <table cellspacing=0 cellpadding=3 style="border: 1pt solid black;" align=center>
   <tr>
-    <th colspan=2 style="color: #666;"><?php=__("activiteiten")?>
-      <small><a href="javascript:popup('activiteit.php')" style="color: #666;">(<?php=__("nieuw")?>)</a></small>
+    <th colspan=2 style="color: #666;"><?=__("activiteiten")?>
+      <small><a href="javascript:popup('activiteit.php')" style="color: #666;">(<?=__("nieuw")?>)</a></small>
     </th>
 <?php
 $nicks=$people->nick();
@@ -101,13 +101,13 @@ foreach($nicks as $id=>$nick)
 	if($person['type'] == 'person')
 	{	?>
     <th style="padding: 0px 5px 0px 5px;" nowrap>
-      <a href="javascript:popup('person.php?pers_id=<?php=$id?>')"><?php=$nick?></a>
+      <a href="javascript:popup('person.php?pers_id=<?=$id?>')"><?=$nick?></a>
     </th>
 <?php	}
 	else if($person['type'] == 'rekening')
 	{	?>
     <th style="padding: 0px 5px 0px 5px;" nowrap>
-      <a href="javascript:popup('account.php?pers_id=<?php=$id?>')"><?php=$nick?></a>
+      <a href="javascript:popup('account.php?pers_id=<?=$id?>')"><?=$nick?></a>
     </th>
 <?php	}
 }
@@ -121,7 +121,7 @@ foreach($current as $item)
 		continue;
 ?>
   <tr onmouseover="this.style.backgroundColor='#cccccc'" onmouseout="this.style.backgroundColor='#ffffff'"
-      onclick="popup('activiteit.php?act_id=<?php=$item['act_id']?>')" class="enabled">
+      onclick="popup('activiteit.php?act_id=<?=$item['act_id']?>')" class="enabled">
 <?php
 	echo "    <td id=\"act_".$item['act_id']."\" nowrap>".$item['date']."</td>\n";
 	echo "    <td id=\"act_".$item['act_id']."\" nowrap>".$item['name']."</td>\n";
@@ -147,7 +147,7 @@ $my_dept = calc_debts($current, $me);
 
 ?>
   <tr>
-    <th colspan=2 align=center><?php=__("totaal")?></th>
+    <th colspan=2 align=center><?=__("totaal")?></th>
 <?php
 foreach($nicks as $id => $nick) {
 	echo "    <th align=right style=\"padding: 0px 5px 0px 5px;\">";
@@ -163,7 +163,7 @@ foreach($nicks as $id => $nick) {
 /* betalingen */
 ?>
   <tr>
-    <th colspan=2 style="color: #666; padding-top: 8;"><?php=__("betalingen")?></th>
+    <th colspan=2 style="color: #666; padding-top: 8;"><?=__("betalingen")?></th>
 <?php
 foreach($nicks as $id => $nick) { ?>
     <th>&nbsp;</th>
@@ -189,7 +189,7 @@ $sums = @$sums[0];
 ?>
   <tr onmouseover="this.style.backgroundColor='#cccccc'" onmouseout="this.style.backgroundColor='#ffffff'"
       onclick="popup('betaal_overzicht.php')" class="enabled">
-    <td colspan=2><?php=__("aan/door mij betaald")?></td>
+    <td colspan=2><?=__("aan/door mij betaald")?></td>
 <?php
 foreach($nicks as $id => $nick) {
 	echo "    <td align=right>";
@@ -215,7 +215,7 @@ $sums = @$sums[0];
 
 ?>
   <tr>
-    <td colspan=2><?php=__("andere betalingen")?></td>
+    <td colspan=2><?=__("andere betalingen")?></td>
 <?php
 foreach($nicks as $id => $nick) {
 	echo "    <td align=right>";
@@ -266,8 +266,8 @@ $res = mysql_query("SELECT * FROM ".$db['prefix']."afrekeningen ".
 				   "ORDER BY date DESC", $db_conn);
 ?>
   <tr>
-    <th colspan=2 style="color: #666; padding-top: 8;"><?php=__("afrekeningen")?>
-      <small><a href="javascript:popup_large('afrekening.php')" style="color: #666;">(<?php=__("nieuw")?>)</a></small>
+    <th colspan=2 style="color: #666; padding-top: 8;"><?=__("afrekeningen")?>
+      <small><a href="javascript:popup_large('afrekening.php')" style="color: #666;">(<?=__("nieuw")?>)</a></small>
     </th>
 <?php  foreach($nicks as $id=>$nick) { ?>
     <th>&nbsp;</th>
@@ -278,7 +278,7 @@ $res = mysql_query("SELECT * FROM ".$db['prefix']."afrekeningen ".
 while($row = mysql_fetch_assoc($res))
 {	?>
   <tr onmouseover="this.style.backgroundColor='#cccccc'" onmouseout="this.style.backgroundColor='#ffffff'"
-      onclick="popup_large('afrekening.php?afr_id=<?php=$row['afr_id']?>')" class="enabled">
+      onclick="popup_large('afrekening.php?afr_id=<?=$row['afr_id']?>')" class="enabled">
 <?php
 	echo "    <th colspan=2>".$row['date']."</th>\n";
 	foreach($nicks as $id => $nick)

@@ -54,38 +54,38 @@ $popup->head();
 $form->head();
 
 if(@$pers_id) { ?>
-<input type=hidden name=pers_id value="<?php=$pers_id?>">
+<input type=hidden name=pers_id value="<?=$pers_id?>">
 <?php } ?><table align=center>
   <tr>
-    <td align=right><label for="voornaam"><?php=__("voornaam")?>:</label></td>
-    <td align=left><input type=text name="voornaam" size=15 value="<?php=@$info['voornaam']?>"></td>
+    <td align=right><label for="voornaam"><?=__("voornaam")?>:</label></td>
+    <td align=left><input type=text name="voornaam" size=15 value="<?=@$info['voornaam']?>"></td>
   </tr>
   <tr>
-    <td align=right><label for="achternaam"><?php=__("achternaam")?>:</label></td>
-    <td align=left><input type=text name="achternaam" size=25 value="<?php=@$info['achternaam']?>"></td>
+    <td align=right><label for="achternaam"><?=__("achternaam")?>:</label></td>
+    <td align=left><input type=text name="achternaam" size=25 value="<?=@$info['achternaam']?>"></td>
   </tr>
   <tr>
-    <td align=right><label for="email"><?php=__("email")?>:</label></td>
-    <td align=left><input type=text name="email" size=25 value="<?php=@$info['email']?>"></td>
+    <td align=right><label for="email"><?=__("email")?>:</label></td>
+    <td align=left><input type=text name="email" size=25 value="<?=@$info['email']?>"></td>
   </tr>
   <tr>
-    <td align=right><label for="rekeningnr"><?php=__("rekeningnr")?>:</label></td>
-    <td align=left><input type=text name="rekeningnr" size=9 value="<?php=@$info['rekeningnr']?>"></td>
+    <td align=right><label for="rekeningnr"><?=__("rekeningnr")?>:</label></td>
+    <td align=left><input type=text name="rekeningnr" size=9 value="<?=@$info['rekeningnr']?>"></td>
   </tr>
   <tr>
-    <td align=right><label for="nick"><?php=__("nickname/login")?>:</label></td>
-    <td align=left><input type=text name="nick" size=8 value="<?php=@$info['nick']?>"></td>
+    <td align=right><label for="nick"><?=__("nickname/login")?>:</label></td>
+    <td align=left><input type=text name="nick" size=8 value="<?=@$info['nick']?>"></td>
   </tr>
   <tr>
-    <td align=right><label for="password"><?php=__("passwd")?><font color=red>*</font>:</label></td>
-    <td align=left><input type=password name="password" size=8 value="<?php=@$info['password']?>"></td>
+    <td align=right><label for="password"><?=__("passwd")?><font color=red>*</font>:</label></td>
+    <td align=left><input type=password name="password" size=8 value="<?=@$info['password']?>"></td>
   </tr>
   <tr>
-    <td align=right><label for="passwd2"><?php=__("re-type")?>:</label></td>
-    <td align=left><input type=password name="passwd2" size=8 value="<?php=@$info['passwd2']?>"></td>
+    <td align=right><label for="passwd2"><?=__("re-type")?>:</label></td>
+    <td align=left><input type=password name="passwd2" size=8 value="<?=@$info['passwd2']?>"></td>
   </tr>
   <tr>
-    <td align=right><label for="lang"><?php=__("taal")?>:</label></td>
+    <td align=right><label for="lang"><?=__("taal")?>:</label></td>
     <td align=left><select name="lang" id="lang">
 <?php
 	foreach(get_languages() as $lng) {
@@ -98,7 +98,7 @@ if(@$pers_id) { ?>
     </select></td>
   </tr>
 <tr><td colspan=2 style="font-size: x-small;"><font
-color=red>*</font> <?php=__("als dit veld leeg is, blijft het paswoord hetzelfde")?></td></tr>
+color=red>*</font> <?=__("als dit veld leeg is, blijft het paswoord hetzelfde")?></td></tr>
 </table><br>
 <?php
 

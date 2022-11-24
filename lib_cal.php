@@ -46,7 +46,7 @@ class calendar {
 
 	function render_js_init() {
 ?>
-  new calendar('<?php=$this->prefix?>','<?php=$this->value?>')
+  new calendar('<?=$this->prefix?>','<?=$this->value?>')
 <?php
 	}
 
@@ -248,14 +248,14 @@ function cal_parseInt(s) {
 		$prefix=$this->prefix; ?>
 <!-- Start Kalender -->
 <div style="position: absolute; border: 0px; overflow: hidden; height: 18px;
-    width: 108px; z-index: 10;" id='<?php=$prefix?>container'>
-<input type=text id='<?php=$prefix?>date' name="<?php=$this->field?>" size=12
-    style="font-size: 80%; height: 18px;" value="<?php=$this->value?>">
-<div id="<?php=$prefix?>popup" style="position: absolute; height: 98px;
+    width: 108px; z-index: 10;" id='<?=$prefix?>container'>
+<input type=text id='<?=$prefix?>date' name="<?=$this->field?>" size=12
+    style="font-size: 80%; height: 18px;" value="<?=$this->value?>">
+<div id="<?=$prefix?>popup" style="position: absolute; height: 98px;
     border: 1px solid; width: 106px; top: 18px; left: 0px;
     background-color: #eeeeee; font-size: 6px; text-align: center;">
-<a id="<?php=$prefix?>prev">&lt;&lt;</a>&nbsp;<span id='<?php=$prefix?>head'></span>&nbsp;<a id="<?php=$prefix?>next">&gt;&gt;</a>
-<table id='<?php=$prefix?>table' border=0 cellspacing=0 width="90"
+<a id="<?=$prefix?>prev">&lt;&lt;</a>&nbsp;<span id='<?=$prefix?>head'></span>&nbsp;<a id="<?=$prefix?>next">&gt;&gt;</a>
+<table id='<?=$prefix?>table' border=0 cellspacing=0 width="90"
     cellpadding=0 align=center style="font-size: 8pt;">
   <tr>
     <th class=cal>z</th>

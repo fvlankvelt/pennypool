@@ -69,7 +69,7 @@ $form = new form("betaling_eval.php", (@$update?true:false));
 <html>
 <head>
 <link rel=stylesheet title="Penny Pool" href="style.css">
-<title><?php=$title?></title>
+<title><?=$title?></title>
 <?php $cal->render_js(); ?>
 <script language="JavaScript">
 function check_amount() {
@@ -98,25 +98,25 @@ function init() {
 }
 </script>
 </head><body onload="init()">
-<h1 align=center><?php=$title?></h1><?php
+<h1 align=center><?=$title?></h1><?php
 	$form->head();
 ?>
 <table align=center>
   <tr>
-    <td align=right><label for="bedrag"><?php=__("bedrag")?>:</label></td>
+    <td align=right><label for="bedrag"><?=__("bedrag")?>:</label></td>
     <td align=left>
       <input type=text size=8 name="bedrag" id="bedrag" class="credit"
           value="<?php echo @$info['bedrag']?$info['bedrag']:"0.00"; ?>" onchange="check_amount()">
     </td>
   </tr>
   <tr>
-    <td align=right><label for="datum"><?php=__("datum")?>:</label></td>
+    <td align=right><label for="datum"><?=__("datum")?>:</label></td>
     <td align=left valign=top>
 <?php  $cal->render_html();  ?>
     </td>
   </tr>
   <tr>
-    <td align=right><label for="van"><?php=__("van")?>:</label></td>
+    <td align=right><label for="van"><?=__("van")?>:</label></td>
     <td align=left>
       <select name="van">
 <?php
@@ -130,7 +130,7 @@ function init() {
     </td>
   </tr>
   <tr>
-    <td align=right><label for="naar"><?php=__("aan")?>:</label></td>
+    <td align=right><label for="naar"><?=__("aan")?>:</label></td>
     <td align=left>
       <select name="naar">
 <?php

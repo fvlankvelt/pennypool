@@ -28,7 +28,7 @@ require_once("lib_util.php");
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 <head>
-<title><?php=__("Huisrekening")?></title>
+<title><?=__("Huisrekening")?></title>
 <link rel=stylesheet title="Penny Pool" href="style.css">
 <script type="text/javascript" language="JavaScript1.2">
 function popup(link) {
@@ -59,14 +59,14 @@ $me=my_data();
 ?>
 <table align=center width=70%>
 <tr><td valign=middle align=left width=60%>
-<h1 align=center><?php=__("Afrekening")?></h1></td>
+<h1 align=center><?=__("Afrekening")?></h1></td>
 <td valign=middle align=center width=40%>
-<a href="index.php">[ <?php=__("terug naar index")?> ]</a>
+<a href="index.php">[ <?=__("terug naar index")?> ]</a>
 </td></tr></table>
 
 <table cellspacing=0 cellpadding=2 style="border: 1pt solid black;" align=center>
   <tr>
-    <th colspan=2 style="color: #666;"><?php=__("activiteiten")?></th>
+    <th colspan=2 style="color: #666;"><?=__("activiteiten")?></th>
 <?php
 
 $nicks=$people->nick();
@@ -90,7 +90,7 @@ foreach($activiteiten as $item)
 {
 ?>
   <tr onmouseover="this.style.backgroundColor='#cccccc'" onmouseout="this.style.backgroundColor='#ffffff'"
-      onclick="popup('activiteit.php?act_id=<?php=$item['act_id']?>')" class="enabled">
+      onclick="popup('activiteit.php?act_id=<?=$item['act_id']?>')" class="enabled">
 <?php
 	echo "    <td id=\"act_".$item['act_id']."\" nowrap>".$item['date']."</td>\n";
 	echo "    <td id=\"act_".$item['act_id']."\" nowrap>".$item['name']."</td>\n";
@@ -123,7 +123,7 @@ $sums = @$sums[$afr_id];
 
 ?>
   <tr>
-	<th colspan=2 style="color: #666; padding-top: 8;"><?php=__("betalingen")?></th>
+	<th colspan=2 style="color: #666; padding-top: 8;"><?=__("betalingen")?></th>
 <?php
 foreach($nicks as $id => $nick) {
 	echo "    <td align=right>";
@@ -137,7 +137,7 @@ echo "  </tr>\n";
 
 ?>
   <tr>
-    <th colspan=2 align=center><?php=__("totaal")?></th>
+    <th colspan=2 align=center><?=__("totaal")?></th>
 <?php
 foreach($nicks as $id => $nick) {
 	echo "    <th align=right style=\"padding: 0px 5px 0px 5px;\">";

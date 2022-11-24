@@ -19,11 +19,11 @@ mysql_free_result($res);
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 <head>
-<title><?php=$title?></title>
+<title><?=$title?></title>
 <link rel=stylesheet title="Penny Pool" href="style.css">
 </head>
 <body>
-<h1 align=center><?php=__("Activiteit")?></h1>
+<h1 align=center><?=__("Activiteit")?></h1>
 <table cellpadding=1 cellspacing=0 border=0 align=center>
 <tbody>
 
