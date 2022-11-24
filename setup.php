@@ -374,6 +374,7 @@ You can now <a href="login.php" class="plain">start using Penny Pool</a>.
 			$upgrade=true;
 
 			include_once('config.php');
+			global $db, $pp;
 
 			$_POST = array();
 			$_POST['db_url'] = $db['url'];

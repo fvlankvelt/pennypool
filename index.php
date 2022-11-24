@@ -24,6 +24,15 @@
 require_once("pennypool.php");
 require_once("lib_util.php");
 
+use \Doctrine\DBAL\ParameterType;
+
+/**
+ * @var Doctrine\DBAL\Connection $dbh
+ * @var string $login
+ * @var people $people
+ */
+global $dbh, $login, $people;
+
 ?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
@@ -42,22 +51,30 @@ function popup_large(link) {
 <body><?php
 
 /* link zorgt ervoor dat we alleen acts krijgen waaraan zelf is meegedaan */
-$res = mysql_query(
-		"SELECT deeln.act_id as act_id,act.name,act.date,".
-				"act.afr_id as afr_id, deeln.pers_id, deeln.credit, ".
-				"deeln.aantal, pers.type ".
-		"FROM ".$db['prefix']."deelnemers deeln, ".
-				$db['prefix']."activiteiten act, ".
-			    $db['prefix']."deelnemers as link, ".
-			    $db['prefix']."mensen me ".
-		"LEFT JOIN ".$db['prefix']."mensen pers ".
-			"ON deeln.pers_id=pers.pers_id ".
-		"WHERE link.pers_id=me.pers_id AND deeln.act_id=link.act_id ".
-			"AND (me.nick='$login' OR act.afr_id!=0) ".
-			"AND deeln.act_id=act.act_id ".
-		"ORDER BY act.act_id DESC",$db_conn);
+
+$sql = "
+	SELECT
+	    deeln.act_id AS act_id, act.name, act.date,
+		act.afr_id AS afr_id, deeln.pers_id, deeln.credit,
+		deeln.aantal, pers.type
+	FROM
+	    deelnemers AS deeln,
+	    activiteiten AS act,
+		deelnemers AS link,
+		mensen AS me
+	LEFT JOIN
+		mensen AS pers ON deeln.pers_id=pers.pers_id
+	WHERE
+		link.pers_id=me.pers_id
+		AND deeln.act_id=link.act_id
+		AND (me.nick=? OR act.afr_id!=0)
+		AND deeln.act_id=act.act_id
+	ORDER BY
+	    act.act_id DESC
+";
+$res = $dbh->executeQuery($sql, [$login], [ParameterType::STRING]);
+
 $activiteiten = parse_activiteiten($res);
-mysql_free_result($res);
 
 $me=my_data();
 
@@ -65,7 +82,7 @@ $me=my_data();
 <table align=center width=70%>
   <tr>
     <td valign=middle align=left width=60% nowrap>
-      <h1><?phpprintf(__("%s's Huisrekening"), $me['nick'])?></h1></td>
+      <h1><?php printf(__("%s's Huisrekening"), $me['nick'])?></h1></td>
     <td valign=middle align=center width=40%>
       <table align=center cellpadding=5 cellspacing=0>
         <tr>
@@ -163,7 +180,7 @@ foreach($nicks as $id => $nick) {
 /* betalingen */
 ?>
   <tr>
-    <th colspan=2 style="color: #666; padding-top: 8;"><?=__("betalingen")?></th>
+    <th colspan=2 style="color: #666; padding-top: 8pt;"><?=__("betalingen")?></th>
 <?php
 foreach($nicks as $id => $nick) { ?>
     <th>&nbsp;</th>
@@ -176,14 +193,17 @@ foreach($nicks as $id => $nick) { ?>
  *       - wat ik heb betaald / aan mij is betaald
  *		 - wat verder aan elkaar is betaald
  */
-$res = mysql_query("SELECT van,naar,SUM(bedrag) as bedrag ".
-				  "FROM ".$db['prefix']."betalingen ".
-				  "WHERE (van=".$me['pers_id']." OR naar=".$me['pers_id'].") ".
-				  "AND afr_id=0 ".
-				  "GROUP BY van,naar",
-				  $db_conn);
+$stm = $dbh->prepare("
+	SELECT van,naar,SUM(bedrag) as bedrag
+	FROM betalingen
+	WHERE
+	    (van=:me OR naar=:me)
+		AND afr_id=0
+	GROUP BY van,naar");
+$stm->bindValue("me", $me['pers_id'], ParameterType::INTEGER);
+$res = $stm->executeQuery();
+
 $sums = parse_betalingen($res);
-mysql_free_result($res);
 $sums = @$sums[0];
 
 ?>
@@ -202,15 +222,18 @@ foreach($nicks as $id => $nick) {
 echo "  </tr>\n";
 
 /* rest */
-$res = mysql_query("SELECT van,naar,SUM(bedrag) as bedrag ".
-				  "FROM ".$db['prefix']."betalingen ".
-				  "WHERE NOT (van=".$me['pers_id']." OR ".
-				  			  "naar=".$me['pers_id'].") ".
-				  "AND afr_id=0 ".
-				  "GROUP BY van,naar",
-				  $db_conn);
+$stm = $dbh->prepare("
+	SELECT van, naar, SUM(bedrag) as bedrag
+	FROM betalingen
+	WHERE
+	    NOT (van=:me OR naar=:me)
+		AND afr_id=0
+	GROUP BY van,naar
+");
+$stm->bindValue("me", $me['pers_id'], ParameterType::INTEGER);
+$res=$stm->executeQuery();
+
 $sums = parse_betalingen($res);
-mysql_free_result($res);
 $sums = @$sums[0];
 
 ?>
@@ -250,10 +273,8 @@ foreach($activiteiten as $item)
 	}
 }
 
-$res = mysql_query("SELECT * FROM ".$db['prefix']."betalingen ".
-				   "WHERE afr_id!=0", $db_conn);
+$res = $dbh->executeQuery("SELECT * FROM betalingen WHERE afr_id!=0");
 $total_bet = parse_betalingen($res);
-mysql_free_result($res);
 
 foreach($total_bet as $afr_id => $sums) {
 	foreach($sums as $id => $sum) {
@@ -262,8 +283,7 @@ foreach($total_bet as $afr_id => $sums) {
 	}
 }
 
-$res = mysql_query("SELECT * FROM ".$db['prefix']."afrekeningen ".
-				   "ORDER BY date DESC", $db_conn);
+$res = $dbh->executeQuery("SELECT * FROM afrekeningen ORDER BY date DESC");
 ?>
   <tr>
     <th colspan=2 style="color: #666; padding-top: 8;"><?=__("afrekeningen")?>
@@ -275,7 +295,7 @@ $res = mysql_query("SELECT * FROM ".$db['prefix']."afrekeningen ".
   </tr>
 <?php
 
-while($row = mysql_fetch_assoc($res))
+while($row = $res->fetchAssociative())
 {	?>
   <tr onmouseover="this.style.backgroundColor='#cccccc'" onmouseout="this.style.backgroundColor='#ffffff'"
       onclick="popup_large('afrekening.php?afr_id=<?=$row['afr_id']?>')" class="enabled">
@@ -296,7 +316,6 @@ while($row = mysql_fetch_assoc($res))
 	}
 	echo "  </tr>\n";
 }
-mysql_free_result($res);
 
 echo "</table><br>\n";
 

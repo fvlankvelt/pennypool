@@ -42,9 +42,12 @@ function randstr($size)
  *    act_id, name, afr_id, pers_id, credit
  * van alle deelnemers, gegroepeerd met
  *    act_id, name en afr_id
+ * @param \Doctrine\DBAL\Result $res
+ * @return string[][]
  */
-function parse_activiteiten($res)
+function parse_activiteiten(Doctrine\DBAL\Result $res): array
 {
+	/** @var people $people */
 	global $people;
 
 	// laad gegevens van alle mogelijke deelnemers
@@ -56,7 +59,7 @@ function parse_activiteiten($res)
 	$n = 0;
 	$act_ids = array();
 	$activiteiten = array();
-	while($row = mysql_fetch_assoc($res))
+	while($row = $res->fetchAssociative())
 	{
 		if($row['act_id'] != $act_id)
 		{
@@ -178,22 +181,20 @@ function filter_mensen($activiteiten)
 	return array_diff($people->nick(), $all);
 }
 
-function parse_betalingen($res)
+function parse_betalingen(Doctrine\DBAL\Result $res): array
 {
 	global $people;
 
 	$sums = array();
 	$all = $people->nick();
-	while($row = mysql_fetch_assoc($res))
+	while($row = $res->fetchAssociative())
 	{
 		if(@$row['afr_id'])
 			$afr_id = $row['afr_id'];
 		else
 			$afr_id = 0;
-		$sums[$afr_id][$row['van']] =
-			@$sums[$afr_id][$row['van']] + $row['bedrag'];
-		$sums[$afr_id][$row['naar']] =
-			@$sums[$afr_id][$row['naar']] - $row['bedrag'];
+		$sums[$afr_id][$row['van']]  = @$sums[$afr_id][$row['van']]  + $row['bedrag'];
+		$sums[$afr_id][$row['naar']] = @$sums[$afr_id][$row['naar']] - $row['bedrag'];
 	}
 	return $sums;
 }
