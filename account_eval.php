@@ -20,10 +20,17 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+require_once 'vendor/autoload.php';
+use \Doctrine\DBAL\ParameterType;
 
 require_once("pennypool.php");
 include_once("lib_layout.php");
 include_once("lib_util.php");
+
+/**
+ * @var Doctrine\DBAL\Connection $dbh
+ */
+global $dbh;
 
 $popup = new popup_eval(__("Rekening opslaan"), "account.php");
 
@@ -35,51 +42,47 @@ if(@$_POST['nick'] != '')
 		$info[$key]=addSlashes(@$_POST[$key]);
 	}
 
-	if(@$_POST['pers_id'])
+	if(isset($_POST['pers_id']))
 	{
+		$pers_id = $_POST['pers_id'];
+
 		if($_POST['action'] != 'delete')
 		{
-			$passwd=addSlashes(crypt($info['password'],randstr(2)));
-			$res=mysql_query("UPDATE ".$db['prefix']."mensen SET ".
-						 "nick='".$info['nick']."',".
-						 "rekeningnr='".$info['rekeningnr']."',".
-						 "type='rekening' ".
-						 "WHERE pers_id=".$_POST['pers_id'],$db_conn);
+			$dbh->executeStatement(" UPDATE mensen SET nick=?, rekeningnr=?, type='rekening' WHERE pers_id=?",
+				[$info['nick'], $info['rekeningnr'], $pers_id],
+				[ParameterType::STRING,ParameterType::STRING,ParameterType::INTEGER]
+			);
 		}
 		else
 		{
-			$res=mysql_query("SELECT count(*) ".
-							 "FROM ".$db['prefix']."deelnemers ".
-							 "WHERE pers_id='".$_POST['pers_id']."'",$db_conn);
-			$row=mysql_fetch_row($res);
-			if($row[0] > 0)
+			$cnt = $dbh->executeQuery("SELECT COUNT(*) FROM deelnemers WHERE pers_id=?",
+				[$pers_id],
+				[ParameterType::INTEGER]
+			)->fetchOne();
+			if($cnt > 0)
 			{
 					$popup->set_error(__("Rekening wordt gebruikt bij activiteiten."));
 					$popup->render_error($_POST);
 					exit();
 			}
-			$res=mysql_query("DELETE FROM ".$db['prefix']."mensen ".
-						"WHERE pers_id=".$_POST['pers_id'],$db_conn);
-			$res=mysql_query("DELETE FROM ".$db['prefix']."deelnemers ".
-						"WHERE pers_id=".$_POST['pers_id'],$db_conn);
-			$res=mysql_query("DELETE FROM ".$db['prefix']."betalingen ".
-						"WHERE van=".$_POST['pers_id'].
-						  " OR naar=".$_POST['pers_id'],$db_conn);
+
+			$dbh->executeStatement("DELETE FROM mensen WHERE pers_id=?",
+				[$pers_id], [ParameterType::INTEGER]);
+			$dbh->executeStatement("DELETE FROM deelnemers WHERE pers_id=?",
+				[$pers_id], [ParameterType::INTEGER]);
+			$dbh->executeStatement("DELETE FROM betalingen WHERE van=? OR naar=?",
+				[$pers_id,$pers_id], [ParameterType::INTEGER,ParameterType::INTEGER]);
 		}
 	}
 	else
 	{
-		$passwd=addSlashes(crypt($info['password'],randstr(2)));
-		$res=mysql_query("INSERT INTO ".$db['prefix']."mensen ".
-						 "(nick,rekeningnr,type) VALUES ".
-						 "('".$info['nick']."',".
-						 "'".$info['rekeningnr']."',".
-						 "'rekening')", $db_conn);
+		$res = $dbh->executeStatement("INSERT INTO mensen (nick,rekeningnr,type) VALUES (?,?,'rekening')",
+			[$info['nick'], $info['rekeningnr']], [ParameterType::STRING, ParameterType::STRING]);
 	}
 
 	$popup->render_ok();
 }
 else
-{ 
+{
 	$popup->render_error($_POST);
 }
