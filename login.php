@@ -25,6 +25,12 @@ require_once 'vendor/autoload.php';
 use \Doctrine\DBAL\DriverManager;
 use \Doctrine\DBAL\ParameterType;
 
+/**
+ * @var string[] $db
+ * @var string[] $pp
+ */
+global $db, $pp;
+
 // select default language
 if(isset($pp['lang']))
 	include_once("lang/".$pp['lang'].".php");
@@ -67,8 +73,9 @@ exit();
 
 	$sth = $db_conn->executeQuery("SELECT * from mensen WHERE nick=? LIMIT 1",
 		[$login], [ParameterType::STRING]);
-	foreach ($sth->fetchAllAssociative() as $row) {
-		if ($row['password']===null or password_verify($row['password'], $passwd))
+	foreach ($sth->fetchAllAssociative() as $row)
+	{
+		if ($row['password']===null or password_verify($passwd, $row['password']))
 		{
 			unset($passwd);
 			session_start();
