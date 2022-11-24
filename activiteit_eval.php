@@ -22,28 +22,15 @@
 
 require_once 'vendor/autoload.php';
 use \Doctrine\DBAL\ParameterType;
-use \Doctrine\DBAL\Types\Type;
 
 require_once("pennypool.php");
 include_once("lib_layout.php");
+include_once("lib_util.php");
 
 /**
  * @var Doctrine\DBAL\Connection $dbh
  */
 global $dbh;
-
-
-function parse_date(string $date): bool|string
-{
-	$dt= DateTime::createFromFormat('!d-m-Y',$_POST['date']);
-	if (!$dt) $dt = DateTime::createFromFormat('!Y-m-d',$_POST['date']) ;
-	if (!$dt) return false;
-
-	global $dbh;
-	$date_sqlsafe = Type::getType('date')->convertToDatabaseValue($dt, $dbh->getDatabasePlatform());
-
-	return $date_sqlsafe;
-}
 
 function check_post_vars($popup) {
 	/** @var people $people */
@@ -56,7 +43,7 @@ function check_post_vars($popup) {
 	}
 
 
-	if(!isset($_POST['date']) or parse_date($_POST['date'])===false)
+	if(!isset($_POST['date']) or date_to_sql($_POST['date'])===false)
 	{
 		$popup->set_error(__("Datum is ongeldig"));
 		return 0;
@@ -89,7 +76,7 @@ $popup = new popup_eval(__("Activiteit eval"), "activiteit.php");
 
 if(check_post_vars($popup))
 {
-	$date = parse_date($_POST['date']);
+	$date_sql = date_to_sql($_POST['date']);
 
 	$insert_deelnemers=true;
 	if(!@$_POST['act_id'])
@@ -104,7 +91,7 @@ if(check_post_vars($popup))
 		if($_POST['action'] != 'delete')
 		{
 			$dbh->executeStatement("UPDATE activiteiten SET name=?, date=? WHERE act_id=?",
-				[$_POST['name'],$date,$act_id], [ParameterType::STRING, ParameterType::STRING, ParameterType::INTEGER]);
+				[$_POST['name'],$date_sql,$act_id], [ParameterType::STRING, ParameterType::STRING, ParameterType::INTEGER]);
 
 			$dbh->executeStatement("DELETE FROM deelnemers WHERE act_id=:id",
 				[$act_id], [ParameterType::INTEGER]);

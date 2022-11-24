@@ -20,6 +20,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+require_once 'vendor/autoload.php';
+use \Doctrine\DBAL\Types\Type;
+
 
 function randstr($size)
 {
@@ -74,7 +77,7 @@ function parse_activiteiten(Doctrine\DBAL\Result $res): array
 			$item['act_id'] = $row['act_id'];
 			$item['afr_id'] = $row['afr_id'];
 			$item['name']	= $row['name'];
-			$item['date']	= $row['date'];
+			$item['date']	= date_from_sql($row['date'])->format('Y-m-d');
 			$item['credit'] = array();
 			$total = 0.0;
 			$n = 0;
@@ -197,4 +200,28 @@ function parse_betalingen(Doctrine\DBAL\Result $res): array
 		$sums[$afr_id][$row['naar']] = @$sums[$afr_id][$row['naar']] - $row['bedrag'];
 	}
 	return $sums;
+}
+
+function date_from_sql(string $date_sql): DateTime
+{
+	/** @var Doctrine\DBAL\Connection $dbh */
+	global $dbh;
+
+	$date = Type::getType('date')->convertToPHPValue($date_sql, $dbh->getDatabasePlatform());
+	return $date;
+}
+
+function date_to_sql(string $date): bool|string
+{
+	/** @var Doctrine\DBAL\Connection $dbh */
+	global $dbh;
+
+	$dt= DateTime::createFromFormat('!d-m-Y',$_POST['date']);
+	if (!$dt) $dt = DateTime::createFromFormat('!Y-m-d',$_POST['date']) ;
+	if (!$dt) return false;
+
+	global $dbh;
+	$date_sqlsafe = Type::getType('date')->convertToDatabaseValue($dt, $dbh->getDatabasePlatform());
+
+	return $date_sqlsafe;
 }

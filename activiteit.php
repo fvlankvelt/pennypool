@@ -32,6 +32,7 @@ use \Doctrine\DBAL\ParameterType;
 require_once("pennypool.php");
 include_once("lib_cal.php");
 include_once("lib_layout.php");
+include_once("lib_util.php");
 
 /**
  * @var Doctrine\DBAL\Connection $dbh
@@ -108,6 +109,7 @@ else if (@$_GET['act_id'])
 	$row = $dbh->executeQuery("SELECT name,date from activiteiten WHERE act_id=?",
 		[$act_id], [ParameterType::INTEGER])->fetchAssociative();
 	$name = $row['name'];
+	/*
 	if($row['date'] != '0000-00-00')
 	{
 		$tmpdate = explode('-', $row['date'], 3);
@@ -117,6 +119,8 @@ else if (@$_GET['act_id'])
 	{
 		$date = date('d-n-Y');
 	}
+	*/
+	$date = date_from_sql($row['date']);
 }
 
 $cal = new calendar("date",$date);

@@ -70,7 +70,7 @@ $sql = "
 		AND (me.nick=? OR act.afr_id!=0)
 		AND deeln.act_id=act.act_id
 	ORDER BY
-	    act.act_id DESC
+	    act.date DESC
 ";
 $res = $dbh->executeQuery($sql, [$login], [ParameterType::STRING]);
 

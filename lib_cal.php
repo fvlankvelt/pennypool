@@ -29,12 +29,12 @@ class calendar {
 	var $field='';
 	var $value='';
 
-	function __construct($field,$value='',$prefix='cal_') {
+	function __construct($field, DateTime $value = null, $prefix='cal_') {
 		$this->field=$field;
 		if(!$value)
 			$this->value=date('d-n-Y');
 		else
-			$this->value=$value;
+			$this->value=$value->format('d-n-Y');
 		$this->prefix=$prefix;
 	}
 
