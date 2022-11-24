@@ -26,16 +26,23 @@
 		  <me>.php,POST_VARS	-> edit verkeerde velden
  */
 
+require_once 'vendor/autoload.php';
+use \Doctrine\DBAL\ParameterType;
+
 require_once("pennypool.php");
 include_once("lib_cal.php");
 include_once("lib_layout.php");
 
-$res=mysql_query("SELECT * FROM ".$db['prefix']."mensen ".
-				 "ORDER BY type DESC, nick ASC", $db_conn);
+/**
+ * @var Doctrine\DBAL\Connection $dbh
+ */
+global $dbh;
+
+$res = $dbh->executeQuery("SELECT * FROM mensen ORDER BY type DESC, nick ASC");
 $ids = array();
 $persons = array();
 $accounts = 0;
-while($row=mysql_fetch_assoc($res))
+while($row=$res->fetchAssociative())
 {
 	$row['checked'] = 0;
 	$row['credit']  = '0.00';
@@ -45,7 +52,6 @@ while($row=mysql_fetch_assoc($res))
 	if($row['type'] == 'rekening')
 		$accounts++;
 }
-mysql_free_result($res);
 
 if(!@$_POST && !@$_GET)
 {
@@ -90,32 +96,27 @@ else if (@$_GET['act_id'])
 	$title = __("Activiteit bewerken");
 	$act_id = $_GET['act_id'];
 
-	$res = mysql_query("SELECT pers_id,credit,aantal ".
-					   "FROM ".$db['prefix']."deelnemers deeln ".
-					   "WHERE act_id=$act_id", $db_conn);
-	while($row = mysql_fetch_assoc($res))
+	$res = $dbh->executeQuery("SELECT pers_id,credit,aantal FROM deelnemers WHERE act_id=?",
+		[$act_id], [ParameterType::INTEGER]);
+	while($row = $res->fetchAssociative())
 	{
 		$persons[$row['pers_id']]['checked'] = 1;
-		$persons[$row['pers_id']]['credit']  = $row['credit'];
+		$persons[$row['pers_id']]['credit']  = amount_to_str($row['credit']);
 		$persons[$row['pers_id']]['mult']    = $row['aantal'];
 	}
-	mysql_free_result($res);
 
-	$res = mysql_query("SELECT name,date ".
-					   "FROM ".$db['prefix']."activiteiten ".
-					   "WHERE act_id=$act_id", $db_conn);
-	$row = mysql_fetch_assoc($res);
+	$row = $dbh->executeQuery("SELECT name,date from activiteiten WHERE act_id=?",
+		[$act_id], [ParameterType::INTEGER])->fetchAssociative();
 	$name = $row['name'];
 	if($row['date'] != '0000-00-00')
 	{
-		$tmpdate = split('-',$row['date']);
+		$tmpdate = explode('-', $row['date'], 3);
 		$date = $tmpdate[2]."-".$tmpdate[1]."-".$tmpdate[0];
 	}
 	else
 	{
 		$date = date('d-n-Y');
 	}
-	mysql_free_result($res);
 }
 
 $cal = new calendar("date",$date);

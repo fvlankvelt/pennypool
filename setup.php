@@ -38,7 +38,7 @@ function create_tables(\Doctrine\DBAL\Connection $conn)
 	$table_act->addColumn("act_id", "integer", ["unsigned" => true, "notnull" => true, "autoincrement" => true]);
 	$table_act->addColumn("name", "string", ["length" => 40, "notnull" => true, "default" => ""]);
 	$table_act->addColumn("date", "date", ["notnull" => true, "default" => $default_date]);
-	$table_act->addColumn("afr_id", "integer", ["unsigned" => true, "notnull" => true]);
+	$table_act->addColumn("afr_id", "integer", ["unsigned" => true, "notnull" => true, "default" => 0]);
 	$table_act->setPrimaryKey(["act_id"]);
 	$table_act->addUniqueIndex(["act_id"], "act_id");
 	$table_act->addIndex(["name","date"], "name");
