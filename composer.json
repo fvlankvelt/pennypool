@@ -1,0 +1,7 @@
+{
+    "name": "frnk/pennypool",
+    "type": "project",
+    "require": {
+        "doctrine/dbal": "^3.5"
+    }
+}

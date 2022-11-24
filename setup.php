@@ -20,130 +20,95 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-function create_tables($prefix, $conn)
+require_once 'vendor/autoload.php';
+
+
+/**
+ * @param $conn
+ * @return void
+ * @throws \Doctrine\DBAL\Schema\SchemaException
+ */
+function create_tables(\Doctrine\DBAL\Connection $conn)
 {
-	$tables = array(
-	"activiteiten" => array(
-		"base" =>
-<<<HEREDOC
-  act_id int(11) NOT NULL auto_increment,
-  name varchar(40) NOT NULL default '""',
-  date date NOT NULL default '0000-00-00',
-  PRIMARY KEY  (act_id),
-  UNIQUE KEY act_id (act_id),
-  KEY name (name,date)
-HEREDOC
-			,
-  		"afr_id" => "afr_id int(11) default '0'"
-		),
+	$schema = new \Doctrine\DBAL\Schema\Schema();
 
-	"afrekeningen" => array(
-		"base" =>
-<<<HEREDOC
-  afr_id int(11) NOT NULL auto_increment,
-  date date NOT NULL default '0000-00-00',
-  PRIMARY KEY (afr_id),
-  UNIQUE KEY afr_id (afr_id)
-HEREDOC
-		),
+	$default_date = "0000-00-00";
 
-	"betalingen" => array(
-		"base" =>
-<<<HEREDOC
-  van int(11) NOT NULL default '0',
-  naar int(11) NOT NULL default '0',
-  datum date NOT NULL default '0000-00-00',
-  bedrag decimal(10,2) default '0.00',
-  PRIMARY KEY  (van,naar,datum)
-HEREDOC
-  		,
-		"afr_id" => "afr_id int(11) default '0'"
-		),
+	$table_act = $schema->createTable("activiteiten");
+	$table_act->addColumn("act_id", "integer", ["unsigned" => true, "notnull" => true, "autoincrement" => true]);
+	$table_act->addColumn("name", "string", ["length" => 40, "notnull" => true, "default" => ""]);
+	$table_act->addColumn("date", "date", ["notnull" => true, "default" => $default_date]);
+	$table_act->addColumn("afr_id", "integer", ["unsigned" => true, "notnull" => true]);
+	$table_act->setPrimaryKey(["act_id"]);
+	$table_act->addUniqueIndex(["act_id"], "act_id");
+	$table_act->addIndex(["name","date"], "name");
 
-	"deelnemers" => array(
-		"base" =>
-<<<HEREDOC
-  act_id int(11) NOT NULL default '0',
-  pers_id int(11) NOT NULL default '0',
-  credit decimal(10,2) default '0.00',
-  PRIMARY KEY  (act_id,pers_id)
-HEREDOC
-		,
-		"aantal" => "aantal int(11) NOT NULL default '1'"
-		),
+	$table_afr = $schema->createTable("afrekening");
+	$table_afr->addColumn("afr_id", "integer", ["unsigned" => true, "notnull" => true, "autoincrement" => true]);
+	$table_afr->addColumn("date", "date", ["notnull" => true, "default" => $default_date]);
+	$table_afr->setPrimaryKey(["afr_id"]);
+	$table_afr->addUniqueIndex(["afr_id"], "afr_id");
 
-	"mensen" => array(
-		"base" =>
-<<<HEREDOC
-  pers_id int(11) NOT NULL auto_increment,
-  voornaam varchar(10) NOT NULL default '',
-  achternaam varchar(20) NOT NULL default '',
-  rekeningnr varchar(9) default NULL,
-  nick varchar(10) NOT NULL default '',
-  email varchar(40) default NULL,
-  password varchar(16) NOT NULL default '',
-  PRIMARY KEY  (pers_id),
-  UNIQUE KEY pers_id (pers_id,nick),
-  UNIQUE KEY nick (nick)
-HEREDOC
-		,
-		"init" =>
-<<<HEREDOC
-  (pers_id,voornaam,nick) VALUES (1,'User','user')
-HEREDOC
-		,
-		"type" => "type varchar(20) default 'person'",
-		"lang" => "lang varchar(5) default 'en'"
-		)
-	);
+	$table_bet = $schema->createTable("betalingen");
+	$table_bet->addColumn("van", "integer", ["notnull" => true, "unsigned" => true]);
+	$table_bet->addColumn("naar", "integer", ["notnull" => true, "unsigned" => true]);
+	$table_bet->addColumn("datum", "date", ["notnull" => true, "default" => $default_date]);
+	$table_bet->addColumn("bedrag", "decimal", ["precision" => 10, "scale" => 2, "default" => 0.00 ]);
+	$table_bet->addColumn("afr_id", "integer", ["default" => 0]);
+	$table_bet->setPrimaryKey(["van","naar","datum"]);
+	$table_bet->addUniqueIndex(["van","naar","datum"], "van_naar_datum");
 
-	foreach($tables as $name => $type)
-	{
-		$res=$conn->query("DESCRIBE {$prefix}{$name}");
-		if($res->errorCode() == 1146)
-		{
-			echo "creating $name<br>\n";
+	$table_dln = $schema->createTable("deelnemers");
+	$table_dln->addColumn("act_id", "integer", ["default" => 0]);
+	$table_dln->addColumn("pers_id", "integer", ["default" => 0]);
+	$table_dln->addColumn("credit", "decimal", ["precision" => 10, "scale" => 2, "default" => 0.00 ]);
+	$table_dln->addColumn("aantal", "integer", ["unsigned" => true, "notnull" => true, "default" => 1]);
+	$table_dln->setPrimaryKey(["act_id", "pers_id"]);
+	$table_dln->addUniqueIndex(["act_id", "pers_id"], "act_pers");
 
-			$conn->exec("CREATE TABLE {$prefix}{$name} ( ".
-						$type["base"]." ) TYPE=MyISAM");
-			if(@$type["init"])
-			{
-				$conn->exec("INSERT INTO {$prefix}{$name} ".
-							$type["init"]);
-			}
-			$res=$conn->query("DESCRIBE {$prefix}{$name}");
-		}
+	$table_mns = $schema->createTable("mensen");
+	$table_mns->addColumn("pers_id", "integer", ["notnull" => true, "autoincrement" => true]);
+	$table_mns->addColumn("voornaam", "string", ["length" => 10, "notnull" => true, "default" => ""]);
+	$table_mns->addColumn("achternaam", "string", ["length" => 20, "notnull" => true, "default" => ""]);
+	$table_mns->addColumn("rekeningnr", "string", ["length" => 9, "notnull" => true, "default" => ""]);
+	$table_mns->addColumn("nick", "string", ["length" => 10, "notnull" => true, "default" => ""]);
+	$table_mns->addColumn("email", "string", ["length" => 40, "notnull" => true, "default" => ""]);
+	$table_mns->addColumn("password", "string", ["length" => 16, "notnull" => true, "default" => ""]);
+	$table_mns->addColumn("type", "string", ["length" => 20, "notnull" => true, "default" => "person"]);
+	$table_mns->addColumn("lang", "string", ["length" => 5, "notnull" => true, "default" => "en"]);
+	$table_mns->setPrimaryKey(["pers_id"]);
+	$table_mns->addUniqueIndex(["pers_id"], "pers_id");
+	$table_mns->addUniqueIndex(["pers_id","nick"], "pers_nick");
+	$table_mns->addUniqueIndex(["nick"], "nick");
 
-		if($res===false or $res->errorCode())
-		{
-			error("Error for table \"{$prefix}{$name}\"",
-					"An unknown error occured when querying the ".
-					"database for table \"{$prefix}{$name}\".",
-				  array());
-		}
 
-		unset($type["base"]);
-		unset($type["init"]);
-		while($row = $res->fetch())
-		{
-			unset($type[$row["Field"]]);
-		}
+	/*
+	echo "<pre>sqlite\n";
+	$foo = $schema->toSql(new Doctrine\DBAL\Platforms\SqlitePlatform);
+	var_dump($foo);
+	echo "</pre><pre>mysql\n";
+	$foo = $schema->toSql(new Doctrine\DBAL\Platforms\MySQL80Platform);
+	var_dump($foo);
+	echo "</pre>";
+	*/
+	// TODO: init mensen als: (pers_id,voornaam,nick) VALUES (1,'User','user')
 
-		if(count($type))
-		{
-			$query = "ALTER TABLE {$prefix}{$name} ";
-			$first = true;
-			foreach($type as $column => $sub)
-			{
-				if($first)
-					$first = false;
-				else
-					$query .= ", ";
-				$query .= "ADD COLUMN ".$sub;
-			}
-			$conn->exec($query);
-		}
+
+	#$sm = $conn->getSchemaManager();
+	$sm = $conn->getDatabasePlatform()->createSchemaManager($conn);
+	$schema_old = $sm->introspectSchema();
+
+	$sql = $schema_old->getMigrateToSQL($schema, $conn->getDatabasePlatform());
+	foreach ($sql as $stm) {
+		$conn->prepare($stm)->executeQuery();
 	}
+
+	/* add default user */
+	$cnt = $conn->prepare("SELECT COUNT() FROM `mensen`;")->executeQuery()->fetchOne();
+	if ($cnt===0) {
+		$conn->prepare("INSERT INTO `mensen` (`pers_id`,`voornaam`,`nick`) VALUES (1,'User','user')")->executeQuery();
+	}
+
 }
 
 function print_style($default = "", $errs = array(), $field = null)
@@ -159,7 +124,7 @@ function print_style($default = "", $errs = array(), $field = null)
 }
 
 // error handling
-function error($title, $explanation, $fields) {
+function error($title, $explanation, $fields=array()) {
 	form(false, array('title' => $title,
 					  'explanation' => $explanation),
 		 $fields);
@@ -199,35 +164,33 @@ make a backup of your existing data.</p></div><br>
 <h3>Database</h3>
 <table align=center>
   <tr>
-    <td align=right<?php print_style("", $errs, "db_dsn");
-		?>><label for="db_dsn">host:</label></td>
-    <td><input type=text name="db_dsn" id="db_dsn" size=16 value="<?php
-	if(@$_POST['db_dsn'])
-		echo $_POST['db_dsn'];
+    <td align=right<?php print_style("", $errs, "db_url");
+		?>><label for="db_url">database url:</label></td>
+    <td><input type=text name="db_url" id="db_url" size=16 value="<?php
+	if(@$_POST['db_url'])
+		echo $_POST['db_url'];
 	else
-		echo "sqlite:/tmp/pennypool.sqlite:";
+		echo "pdo-sqlite://localhost//tmp/pennypool.sqlite";
 ?>"></td>
   </tr>
   <tr>
     <td colspan=2 style="padding-top: 8pt;">
-      <input type=radio name="db_exist" id="db_e_new" value="new"<?php
-	if(!@$_POST['db_exist'] || @$_POST['db_exist']=='new')
-		echo " checked";
-?>><label for="db_e_new">New Database</label><br>
-      <input type=radio name="db_exist" id="db_e_old" value="old"<?php
-	if(@$_POST['db_exist']=='old')
-		echo " checked";
-?>><label for="db_e_old">Existing Database</label>
+      <input type=radio name="db_exist" id="db_e_old" value="old" checked/>
+		<label for="db_e_old">Existing Database</label>
     </td>
 </table>
 </td><td valign=top width="45%" colspan=2 style="border: 1pt solid #aaa; padding: 4pt;">
 <h3>Database User</h3>
+<!-- revise this later
 <input type=radio name="user_exist" value="new"<?php
-if(!@$_POST['user_exist'] || @$_POST['user_exist']=='new')
-	echo " checked"; ?>>New User<br>
+if(@$_POST['user_exist']=='new')
+	echo " checked"; ?>>New User<br> -->
 <input type=radio name="user_exist" value="old"<?php
 if(@$_POST['user_exist']=='old')
 	echo " checked"; ?>>Existing User<br>
+<input type=radio name="user_exist" value="none"<?php
+if(!@$_POST['user_exist'] || @$_POST['user_exist']=='none')
+	echo " checked"; ?>>No user<br>
 <table>
   <tr>
     <td align=right<?php print_style("", $errs, "user");
@@ -252,16 +215,9 @@ if(@$_POST['pass'])
 (when installing Penny Pool for the first time),
 or alter them (when upgrading).</small>
 </td>
-<td valign=top width="25%" style="border: 1pt solid #aaa; padding: 4pt;">
-  <h3>Table prefix</h3>
-prefix: <input type=text name="table_prefix" size=16 value="<?php
-if(@$_POST['table_prefix'])
-	echo $_POST['table_prefix'];
-else
-	echo "pennypool";
-?>">
-</td> </tr>
-<tr><td colspan=2 style="border: 1pt solid #aaa; padding: 4pt;">
+</tr>
+<tr><!-- revise later
+<td colspan=2 style="border: 1pt solid #aaa; padding: 4pt;">
 <h3>Database root user</h3>
 <p align=center<?php print_style("", $errs, "root_user"); ?>>
 user: <input type=text name="root_user" size=12 value="<?php
@@ -276,6 +232,7 @@ if(@$_POST['root_pass'])
 ?>><br><br>
 <small>This information is only needed when either a new database
 or a new database user is used.</small>
+-->
 </td>
 <td valign=top width="30%" colspan=2 style="border: 1pt solid #aaa; padding: 4pt;">
   <h3>Language</h3>
@@ -319,6 +276,8 @@ or a new database user is used.</small>
 
 switch(@$_POST['step']) {
 	case 'create_tables':
+		// revise this later
+/*
 	if($_POST['db_exist']=='new' ||
 			$_POST['user_exist']=='new') {
 		$root_user=addSlashes($_POST['root_user']);
@@ -356,39 +315,33 @@ switch(@$_POST['step']) {
 				"\"".$_POST['db_name']."\".");
 		$db_root->exec("FLUSH privileges;",$db_root);
 	}
-	$db_conn=@new PDO($_POST['db_dsn'],
-					addSlashes($_POST['user']),
-					addSlashes($_POST['pass'])) or
-		error("Error connecting as \"".$_POST['user']."\"",
-				"Unable to connect to the database server with ".
-				"the given username &amp; password.",
-			  array("user", "pass"));
+*/
 
-	if(@$_POST['table_prefix'])
-		$prefix=$_POST['table_prefix']."_";
-	else
-		$prefix="";
-
-	create_tables($prefix, $db_conn);
+try {
+	$conn_params = ['url' => $_POST['db_url']];
+	$db_conn = \Doctrine\DBAL\DriverManager::getConnection($conn_params);
+	create_tables($db_conn);
+} catch (\Doctrine\DBAL\Exception $e) {
+	error("Error connecting to {$_POST['db_url']}",
+		"Unable to connect to the database server with " .
+		"the given username &amp; password: " .
+		$e->getMessage(),
+		array("user", "pass"));
+}
 
 ?>
 <body>
 <center>
 <div style="width: 70%; text-align: left; border: 1pt solid black; padding: 10pt;">
-<h2 style="text-align: center; padding-top: 0pt;">Successfull installation</h2>
+<h2 style="text-align: center; padding-top: 0pt;">Successful installation</h2>
 The database has been successfully initialized, to let <em>Penny
 Pool</em> use it, please copy &amp; paste the following
 information into <code>config.php</code> (in the directory where
 <em>Penny Pool</em> is installed):
 <pre>
 &lt;?php
- 	$db['host']="<?php=$_POST['db_host']?>";
-	$db['db']="<?php=$_POST['db_name']?>";
-	$db['prefix']="<?php=$prefix?>";
-	$db['user']="<?php=$_POST['user']?>";
-	$db['passwd']="<?php=$_POST['pass']?>";
-
-	$pp['lang']="<?php=$_POST['lang']?>";
+ 	$db['url']="<?=$_POST['db_url']?>";
+	$pp['lang']="<?=$_POST['lang']?>";
 
 </pre>
 
@@ -421,14 +374,9 @@ You can now <a href="login.php" class="plain">start using Penny Pool</a>.
 			include_once('config.php');
 
 			$_POST = array();
-			$_POST['db_dsn'] = $db['dsn'];
-			if(@$db['prefix'])
-			{
-				$_POST['table_prefix'] = substr($db['prefix'], 0,
-									  strrpos($db['prefix'], '_'));
-			}
-			$_POST['user'] = $db['user'];
-			$_POST['pass'] = $db['passwd'];
+			$_POST['db_url'] = $db['url'];
+			#$_POST['user'] = $db['user'];
+			#$_POST['pass'] = $db['passwd'];
 
 			$_POST['lang'] = @$pp['lang'];
 
