@@ -43,7 +43,7 @@ function create_tables(\Doctrine\DBAL\Connection $conn)
 	$table_act->addUniqueIndex(["act_id"], "act_id");
 	$table_act->addIndex(["name","date"], "name");
 
-	$table_afr = $schema->createTable("afrekening");
+	$table_afr = $schema->createTable("afrekeningen");
 	$table_afr->addColumn("afr_id", "integer", ["unsigned" => true, "notnull" => true, "autoincrement" => true]);
 	$table_afr->addColumn("date", "date", ["notnull" => true, "default" => $default_date]);
 	$table_afr->setPrimaryKey(["afr_id"]);
