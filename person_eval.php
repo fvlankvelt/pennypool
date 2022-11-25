@@ -66,14 +66,6 @@ if(check_post_vars($popup)) {
 		$me=my_data();
 		if($_POST['action'] != 'delete')
 		{
-			/* check for $login=='nick' van pers_id in db,
-			   update $login als dit het geval is */
-			if($me['pers_id']==$_POST['pers_id'])
-			{
-				$_SESSION['login']=$info['nick'];
-				$_SESSION['lang']=$info['lang'];
-			}
-
 			$sql_passwd = "";
 			if ($info['password']!='') {
 				$info['passwd_hash'] = password_hash($info['password'],  PASSWORD_ARGON2ID);
@@ -89,15 +81,29 @@ if(check_post_vars($popup)) {
 					rekeningnr=:rekeningnr,
 					lang=:lang
 					$sql_passwd
-				WHERE pers_id=?
+				WHERE pers_id=:id
 			";
 			$stm = $dbh->prepare($sql);
+			$stm->bindValue('id', $me['pers_id']);
 			foreach ($info as $k => $v) {
 				if ($k!="password") {
 					$stm->bindValue($k, $v);
 				}
 			}
 			$cnt=$stm->executeStatement();
+			if ($cnt===1) {
+				/* check for $login=='nick' van pers_id in db,
+				   update $login als dit het geval is */
+				if($me['pers_id']==$_POST['pers_id'])
+				{
+					$_SESSION['login']=$info['nick'];
+					$_SESSION['lang']=$info['lang'];
+				}
+			}
+			else
+			{
+				error("updating", "num rows changed: $cnt");
+			}
 		}
 		else
 		{
