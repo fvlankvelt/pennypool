@@ -57,7 +57,7 @@ while($row=$res->fetchAssociative())
 if(!@$_POST && !@$_GET)
 {
 	$title = __("Nieuwe activiteit");
-	$date = date('d-n-Y');
+	$date = new DateTime("now");
 	$name = "";
 }
 else if(@$_POST['ids'])
@@ -84,7 +84,7 @@ else if(@$_POST['ids'])
 	}
 	if(@$_POST['date'])
 	{
-		$date=$_POST['date'];
+		$date=DateTime::createFromFormat('!d-m-Y',$_POST['date']);
 	}
 	if(@$_POST['name'])
 	{
