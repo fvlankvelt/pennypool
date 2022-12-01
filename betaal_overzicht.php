@@ -47,11 +47,13 @@ $res_aan = $dbh->executeQuery("
 		SELECT bet.van AS `van`, bet.naar AS `naar`, pers.nick AS `nick`, datum, bedrag
 		FROM betalingen AS `bet`, mensen AS `pers`
 		WHERE bet.van=? AND pers.pers_id=bet.naar AND bet.afr_id=0
+		ORDER BY datum DESC
 	",[$me['pers_id']], [ParameterType::INTEGER]);
 $res_van = $dbh->executeQuery("
 		SELECT bet.van AS `van`, bet.naar AS `naar`, pers.nick AS `nick`, datum, bedrag
 		FROM betalingen AS `bet`, mensen AS `pers`
 		WHERE bet.naar=? AND pers.pers_id=bet.van AND bet.afr_id=0
+		ORDER BY datum DESC
 	",[$me['pers_id']], [ParameterType::INTEGER]);
 $aan = $res_aan->fetchAllAssociative();
 $van = $res_van->fetchAllAssociative();
