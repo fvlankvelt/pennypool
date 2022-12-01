@@ -20,9 +20,19 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+require_once 'vendor/autoload.php';
+use \Doctrine\DBAL\ParameterType;
+
 require_once("pennypool.php");
 include_once("lib_cal.php");
 include_once("lib_layout.php");
+include_once("lib_util.php");
+
+/**
+ * @var Doctrine\DBAL\Connection $dbh
+ */
+global $dbh;
+
 
 $me=my_data();
 
@@ -32,36 +42,36 @@ if(!@$_POST && !@$_GET) {
 	$info=array();
 	$info['van']=$me['pers_id'];
 	$info['naar']=$me['pers_id'];
+	$info['datum']=new DateTime();
 } else if(@$_POST['action'] == 'insert') { /* back from eval */
 	$title=__("Nieuwe betaling");
 	$info=$_POST;
+	$info['datum']=date_to_dt($info['datum']);
 } else {
 	$title=__("Betaling bewerken");
 	$update=true;
 	if(@$_POST) { /* back from eval */
 		$info=$_POST;
+		$info['datum']=date_to_dt($info['datum']);
 	} else { /* aangeroepen met alleen keys */
 		$info=$_GET;
-		$date=split('-',$info['datum']);
-		$res=mysql_query("SELECT * FROM ".$db['prefix']."betalingen ".
-				"WHERE van=".$info['van']." AND naar=".$info['naar']." ".
-				"AND datum='".$date[2]."-".$date[1]."-".$date[0]."' LIMIT 1",
-				$db_conn);
-		$row=mysql_fetch_assoc($res);
+		$info['datum']=date_to_dt($info['datum']);
+		$row=$dbh->executeQuery(
+			"SELECT * FROM betalingen WHERE van=? AND naar=? AND datum=? LIMIT 1",
+			[$info['van'], $info['naar'], dt_to_sql($info['datum'])],
+			[ParameterType::INTEGER, ParameterType::INTEGER, ParameterType::STRING]
+		)->fetchAssociative();
 		$info['bedrag']=$row['bedrag'];
-		mysql_free_result($res);
 	}
 }
 
-$res=mysql_query("SELECT pers_id,nick FROM ".$db['prefix']."mensen WHERE 1 ".
-			"ORDER BY nick ASC LIMIT 20", $db_conn);
+$res = $dbh->executeQuery("SELECT pers_id,nick FROM mensen ORDER BY nick ASC");
 $people=array();
-while($row=mysql_fetch_assoc($res)) {
+while($row=$res->fetchAssociative()) {
 	$people[$row['pers_id']]=$row['nick'];
 }
-mysql_free_result($res);
 
-$cal=new calendar("datum",@$info['datum']);
+$cal = new calendar("datum",$info['datum']);
 $form = new form("betaling_eval.php", (@$update?true:false));
 
 ?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
@@ -112,19 +122,19 @@ function init() {
   <tr>
     <td align=right><label for="datum"><?=__("datum")?>:</label></td>
     <td align=left valign=top>
-<?php  $cal->render_html();  ?>
+<?php  $cal->render_html($update ? true : false);  ?>
     </td>
   </tr>
   <tr>
     <td align=right><label for="van"><?=__("van")?>:</label></td>
     <td align=left>
-      <select name="van">
+      <select name="van" >
 <?php
 	foreach($people as $id=>$nick) {
 		if(@$info['van']==$id)
 			echo "        <option value=\"$id\" selected>$nick</option>\n";
 		else
-			echo "        <option value=\"$id\">$nick</option>\n";
+			echo "        <option value=\"$id\" ". ($update ? "disabled" : ""). " >$nick</option>\n";
 	}	?>
       </select>
     </td>
@@ -132,13 +142,13 @@ function init() {
   <tr>
     <td align=right><label for="naar"><?=__("aan")?>:</label></td>
     <td align=left>
-      <select name="naar">
+      <select name="naar" >
 <?php
 	foreach($people as $id=>$nick) {
 		if(@$info['naar']==$id)
 			echo "        <option value=\"$id\" selected>$nick</option>\n";
 		else
-			echo "        <option value=\"$id\">$nick</option>\n";
+			echo "        <option value=\"$id\" ". ($update ? "disabled" : ""). ">$nick</option>\n";
 	}	?>
       </select>
     </td>

@@ -213,15 +213,26 @@ function date_from_sql(string $date_sql): DateTime
 
 function date_to_sql(string $date): bool|string
 {
+	$dt = date_to_dt($date);
+	if (!$dt) return false;
+	return dt_to_sql($dt);
+}
+
+function dt_to_sql(DateTime $dt): string
+{
 	/** @var Doctrine\DBAL\Connection $dbh */
 	global $dbh;
 
-	$dt= DateTime::createFromFormat('!d-m-Y',$_POST['date']);
-	if (!$dt) $dt = DateTime::createFromFormat('!Y-m-d',$_POST['date']) ;
+	$date_sqlsafe = Type::getType('date')->convertToDatabaseValue($dt, $dbh->getDatabasePlatform());
+	return $date_sqlsafe;
+}
+
+function date_to_dt(string $date): bool|DateTime
+{
+	/* TODO really annoying that these formats are used inconsistently */
+	$dt = DateTime::createFromFormat('!d-m-Y',$date);
+	if (!$dt) $dt = DateTime::createFromFormat('!Y-m-d',$date) ;
 	if (!$dt) return false;
 
-	global $dbh;
-	$date_sqlsafe = Type::getType('date')->convertToDatabaseValue($dt, $dbh->getDatabasePlatform());
-
-	return $date_sqlsafe;
+	return $dt;
 }

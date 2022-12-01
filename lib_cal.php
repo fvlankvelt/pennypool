@@ -244,13 +244,19 @@ function cal_parseInt(s) {
 </script>
 <?php  }
 
-	function render_html() {
+	function render_html(bool $is_disabled = false) {
 		$prefix=$this->prefix; ?>
 <!-- Start Kalender -->
 <div style="position: absolute; border: 0px; overflow: hidden; height: 18px;
     width: 108px; z-index: 10;" id='<?=$prefix?>container'>
+	<?php if ($is_disabled) { ?>
+		<input type=hidden id='<?=$prefix?>date' name="<?=$this->field?>" size=12
+			   style="font-size: 80%; height: 18px;" value="<?=$this->value?>" >
+		<input type=text id='<?=$prefix?>date' name="<?=$this->field?>_disabled" size=12
+			   style="font-size: 80%; height: 18px;" value="<?=$this->value?>" disabled >
+	<?php } else { ?>
 <input type=text id='<?=$prefix?>date' name="<?=$this->field?>" size=12
-    style="font-size: 80%; height: 18px;" value="<?=$this->value?>">
+    style="font-size: 80%; height: 18px;" value="<?=$this->value?>" >
 <div id="<?=$prefix?>popup" style="position: absolute; height: 98px;
     border: 1px solid; width: 106px; top: 18px; left: 0px;
     background-color: #eeeeee; font-size: 6px; text-align: center;">
@@ -275,6 +281,7 @@ for($i=0;$i<6;$i++) {
 	echo "  </tr>\n";
 }
 ?></table></div>
+			<?php } ?>
 </div>
 <!-- Eind  Kalender -->
 <?php	}
