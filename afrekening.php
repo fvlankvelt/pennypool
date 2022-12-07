@@ -20,10 +20,19 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+require_once 'vendor/autoload.php';
+use \Doctrine\DBAL\ParameterType;
 
 require_once("pennypool.php");
 include_once("lib_cal.php");
 include_once("lib_layout.php");
+include_once("lib_util.php");
+
+/**
+ * @var Doctrine\DBAL\Connection $dbh
+ */
+global $dbh;
+
 
 function display_datum($date)
 {
@@ -34,37 +43,28 @@ function display_datum($date)
 if(!@$_POST && !@$_GET) {
 	$title=__("Nieuwe afrekening");
 	$info=array();
-	$date=date('d-n-Y');
+	$date=new DateTime();
 } else if (@$_GET['afr_id']) {
 	$title=__("Afrekening bewerken");
 	$afr_id=$_GET['afr_id'];
 
-	$res=mysql_query("SELECT * FROM ".$db['prefix']."afrekeningen ".
-					 "WHERE afr_id=".$afr_id, $db_conn);
-	$info=mysql_fetch_assoc($res);
-	mysql_free_result($res);
+	$info = $dbh->executeQuery("SELECT * FROM afrekeningen WHERE afr_id=?",
+	 	[$afr_id], [ParameterType::INTEGER])->fetchAssociative();
+	$info['date'] = date_from_sql($info['date']);
+	$date = $info['date'];
 
-	if($info['date'] != '0000-00-00')
-	{
-		$tmpdate=split('-',$info['date']);
-		$date=$tmpdate[2]."-".$tmpdate[1]."-".$tmpdate[0];
-	} else {
-		$date=date('d-n-Y');
-	}
-	$info['date'] = $date;
+	$stm = $dbh->executeQuery("SELECT * FROM betalingen WHERE afr_id=?",
+	  	[$afr_id], [ParameterType::INTEGER]);
 
-	$res = mysql_query("SELECT * FROM ".$db['prefix']."betalingen ".
-					   "WHERE afr_id=$afr_id", $db_conn);
 	$info['betalingen'] = array();
-	while($row = mysql_fetch_assoc($res))
+	while($row = $stm->fetchAssociative())
 		$info['betalingen'][] = $row['van'].":".$row['naar'].":".$row['datum'];
 
-	$res=mysql_query("SELECT act_id FROM ".$db['prefix']."activiteiten ".
-					 "WHERE afr_id=".$afr_id, $db_conn);
+	$stm = $dbh->executeQuery("SELECT * FROM activiteiten WHERE afr_id=?",
+		[$afr_id], [ParameterType::INTEGER]);
 	$info['activiteiten']=array();
-	while($row = mysql_fetch_assoc($res))
+	while($row = $stm->fetchAssociative())
 		$info['activiteiten'][] = $row['act_id'];
-	mysql_free_result($res);
 } else {
 	if(@$_POST['afr_id']) {
 		$title=__("Afrekening bewerken");
@@ -73,55 +73,55 @@ if(!@$_POST && !@$_GET) {
 		$title=__("Nieuwe afrekening");
 	}
 	$info=$_POST;
-	$date=$_POST['date'];
+	$date=date_to_dt($_POST['date']);
 }
 
 /* activiteiten */
 $all_acts = array();
 $act_reverse = array();
-$res = mysql_query("SELECT * FROM ".$db['prefix']."activiteiten AS act ".
-				   "WHERE afr_id=0 ".
-				   (@$afr_id?"OR afr_id=$afr_id ":"").
-				   "ORDER BY act.date DESC, act.act_id DESC", $db_conn);
+
+$afr_id_met_nul = @$afr_id ? [0,$afr_id]: [0];
+$stm = $dbh->executeQuery("SELECT * FROM activiteiten AS act WHERE afr_id IN (?) ORDER BY act.date DESC, act.act_id DESC",
+   	[$afr_id_met_nul], [\Doctrine\DBAL\Connection::PARAM_INT_ARRAY]);
 $i = 0;
-while($row = mysql_fetch_assoc($res))
+while ($row = $stm->fetchAssociative())
 {
+	$row['date'] = date_from_sql($row['date']);
 	$act_reverse[$row['act_id']] = $i;
 	$all_acts[$i] = $row;
 	$i++;
 }
-mysql_free_result($res);
 
 /* personen */
 $persons = array();
 $pers_reverse = array();
-$res = mysql_query("SELECT * FROM ".$db['prefix']."mensen ".
-				   "ORDER BY nick ASC", $db_conn);
+$stm = $dbh->executeQuery("SELECT * FROM mensen ORDER BY nick ASC");
 $i=0;
-while($row = mysql_fetch_assoc($res))
+while($row = $stm->fetchAssociative())
 {
 	$pers_reverse[$row['pers_id']] = $i;
 	$persons[$i] = $row;
 	$i++;
 }
-mysql_free_result($res);
 
 /* deelnemers aan activiteiten */
 $deelnemers = array();
-$res = mysql_query("SELECT deeln.* ".
-				   "FROM ".$db['prefix']."deelnemers AS deeln, ".
-						   $db['prefix']."activiteiten AS act ".
-				   "WHERE deeln.act_id = act.act_id ".
-						"AND (act.afr_id=0 ".
-							  (@$afr_id?"OR afr_id=$afr_id ":"").") ".
-				   "ORDER BY act.date DESC, act.act_id DESC", $db_conn);
+$stm = $dbh->executeQuery("
+		SELECT deeln.*, act.date
+		FROM deelnemers AS deeln,
+	    	 activiteiten AS act
+		WHERE deeln.act_id = act.act_id
+	  	  AND afr_id in (?)
+		ORDER BY act.date DESC , act.act_id DESC
+	", [$afr_id_met_nul], [\Doctrine\DBAL\Connection::PARAM_INT_ARRAY]);
 $act_id = 0;
 $cnt = 0;
 $mult = 0;
 $n_acts = -1;
 $total = 0;
-while($row = mysql_fetch_assoc($res))
+while($row = $stm->fetchAssociative())
 {
+	$row['date'] = date_from_sql($row['date']);
 	if($row['act_id'] != $act_id)
 	{
 		if($act_id && $mult)
@@ -166,21 +166,18 @@ if($act_id && $mult)
 	}
 }
 $n_acts++;
-mysql_free_result($res);
 
 /* betalingen */
-$res = mysql_query("SELECT * ".
-				   "FROM ".$db['prefix']."betalingen ".
-				   "WHERE afr_id=0 ".
-						  (@$afr_id?"OR afr_id=$afr_id ":"").
-				   "ORDER BY datum DESC", $db_conn);
+$stm = $dbh->executeQuery("SELECT * FROM betalingen WHERE afr_id IN (?) ORDER BY datum DESC ",
+ 	[$afr_id_met_nul], [\Doctrine\DBAL\Connection::PARAM_INT_ARRAY]);
 $betalingen = array();
-while($row = mysql_fetch_assoc($res))
+while($row = $stm->fetchAssociative())
 {
 	$row['checked'] = (@$afr_id && $row['afr_id'] == $afr_id);
+	$row['datum'] = date_from_sql($row['datum']);
+	$row['bedrag'] = sprintf("%.2f", $row['bedrag']);
 	$betalingen[] = $row;
 }
-mysql_free_result($res);
 
 $cal = new calendar("date", $date);
 $form = new form("afrekening_eval.php", (@$afr_id?true:false));
@@ -414,14 +411,14 @@ function init() {
   <tr>
     <td>
       <input type=checkbox id='betid_<?=$i?>' name='betalingen[]' value=<?php
-	echo "\"".$item['van'].":".$item['naar'].":".$item['datum']."\"";
+	echo "\"".$item['van'].":".$item['naar'].":".$item['datum']->format('Y-m-d')."\"";
 	if($item['checked'])
 		echo " checked";
 ?>></input>
     </td>
     <td align=center><?=$persons[$pers_reverse[$item['van']]]['nick']?></td>
     <td align=center><?=$persons[$pers_reverse[$item['naar']]]['nick']?></td>
-    <td align=center><?=display_datum($item['datum'])?></td>
+    <td align=center><?=$item['datum']->format('Y-m-d')?></td>
     <td align=right><?=$item['bedrag']?></td>
   </tr>
 		<?php

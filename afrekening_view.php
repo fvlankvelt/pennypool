@@ -20,9 +20,21 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-/* set $login, $db_conn */
+require_once 'vendor/autoload.php';
+use \Doctrine\DBAL\ParameterType;
+
 require_once("pennypool.php");
-require_once("lib_util.php");
+include_once("lib_cal.php");
+include_once("lib_layout.php");
+include_once("lib_util.php");
+
+/**
+ * @var Doctrine\DBAL\Connection $dbh
+ * @var people $people
+ */
+global $dbh;
+global $people;
+
 
 ?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
   "http://www.w3.org/TR/REC-html40/loose.dtd">
@@ -44,15 +56,16 @@ function popup_large(link) {
 $afr_id=@$HTTP_GET_VARS["afr_id"];
 
 /* link zorgt ervoor dat we alleen acts krijgen waaraan zelf is meegedaan */
-$res = mysql_query("SELECT act.act_id as act_id,act.name,act.date,".
-				   "act.afr_id as afr_id, deeln.pers_id, ".
-				   "deeln.credit, deeln.aantal ".
-		"FROM ".$db['prefix']."deelnemers deeln,".
-			$db['prefix']."activiteiten act ".
-		"WHERE deeln.act_id=act.act_id AND act.afr_id=$afr_id ".
-		"ORDER BY act.act_id DESC",$db_conn);
-$activiteiten = parse_activiteiten($res);
-mysql_free_result($res);
+$stm = $dbh->executeQuery("
+		SELECT act.act_id AS act_id, act.name, act.date, act.afr_id as afr_id,
+			   deeln.credit, deeln.aantal
+		FROM deelnemers AS deeln,
+		     activiteiten AS act
+		WHERE deeln.act_id=act.act_id AND
+		      act.afr_id=?
+		ORDER BY act.date DESC, act.act_id DESC
+	",[$afr_id],[ParameterType::INTEGER]);
+$activiteiten = parse_activiteiten($stm);
 
 $me=my_data();
 
@@ -113,17 +126,14 @@ foreach($activiteiten as $item)
 
 $total_amount = calc_totals($activiteiten);
 
-$res=mysql_query("SELECT van,naar,SUM(bedrag) as bedrag,afr_id ".
-				  "FROM ".$db['prefix']."betalingen ".
-				  "WHERE afr_id=$afr_id ".
-				  "GROUP BY van,naar", $db_conn);
-$sums = parse_betalingen($res);
-mysql_free_result($res);
+$stm = $dbh->executeQuery("SELECT van, naar, SUM(bedrag) AS BEDRAG, afr_id FROM betalingen WHERE afr_id=? GROUP BY van, naar",
+	[$afr_id], [ParameterType::INTEGER]);
+$sums = parse_betalingen($stm);
 $sums = @$sums[$afr_id];
 
 ?>
   <tr>
-	<th colspan=2 style="color: #666; padding-top: 8;"><?=__("betalingen")?></th>
+	<th colspan=2 style="color: #666; padding-top: 8px;"><?=__("betalingen")?></th>
 <?php
 foreach($nicks as $id => $nick) {
 	echo "    <td align=right>";
