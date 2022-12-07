@@ -62,6 +62,8 @@ function parse_activiteiten(Doctrine\DBAL\Result $res): array
 	$n = 0;
 	$act_ids = array();
 	$activiteiten = array();
+
+	# TODO: rewrite this
 	while($row = $res->fetchAssociative())
 	{
 		if($row['act_id'] != $act_id)
@@ -74,6 +76,7 @@ function parse_activiteiten(Doctrine\DBAL\Result $res): array
 
 				$activiteiten[] = $item;
 			}
+			$item = array();
 			$item['act_id'] = $row['act_id'];
 			$item['afr_id'] = $row['afr_id'];
 			$item['name']	= $row['name'];
@@ -135,7 +138,7 @@ function calc_totals($activiteiten)
 	{
 		foreach($nicks as $id => $nick)
 		{
-			if(@$item['credit'][$id])
+			if(array_key_exists($id,$item['credit']))
 			{
 				$amount=$item['credit'][$id]-$item['mult'][$id] * $item['debet'];
 				$total_amount[$id]=@$total_amount[$id]+$amount;

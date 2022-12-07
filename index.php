@@ -50,33 +50,31 @@ function popup_large(link) {
 </head>
 <body><?php
 
-/* link zorgt ervoor dat we alleen acts krijgen waaraan zelf is meegedaan */
+$me=my_data();
 
+/* select alle deelnemers/activiteiten waar we zelf aan deelnemen (voor overzicht)
+ * of die in een afrekening zitten (voor totalen afrekening) */
 $sql = "
-	SELECT
-	    deeln.act_id AS act_id, act.name, act.date,
-		act.afr_id AS afr_id, deeln.pers_id, deeln.credit,
-		deeln.aantal, pers.type
-	FROM
-	    deelnemers AS deeln,
-	    activiteiten AS act,
-		deelnemers AS link,
-		mensen AS me
-	LEFT JOIN
-		mensen AS pers ON deeln.pers_id=pers.pers_id
-	WHERE
-		link.pers_id=me.pers_id
-		AND deeln.act_id=link.act_id
-		AND (me.nick=? OR act.afr_id!=0)
-		AND deeln.act_id=act.act_id
-	ORDER BY
-	    act.date DESC
+SELECT
+	deeln.act_id AS act_id, act.name, act.date,
+	act.afr_id AS afr_id, deeln.pers_id, deeln.credit,
+	deeln.aantal, pers.type
+FROM
+	deelnemers AS deeln
+LEFT JOIN
+	activiteiten AS act on act.act_id=deeln.act_id
+LEFT JOIN
+	mensen AS pers ON deeln.pers_id=pers.pers_id
+WHERE
+      act.afr_id!=0
+   OR act.act_id IN (SELECT DISTINCT act_id FROM deelnemers WHERE pers_id=?)
+ORDER BY
+	act.date DESC, act_id DESC, deeln.pers_id ASC;
 ";
-$res = $dbh->executeQuery($sql, [$login], [ParameterType::STRING]);
+$res = $dbh->executeQuery($sql, [$me['pers_id']], [ParameterType::INTEGER]);
 
 $activiteiten = parse_activiteiten($res);
 
-$me=my_data();
 
 ?>
 <table align=center width=70%>
@@ -145,9 +143,9 @@ foreach($current as $item)
 	foreach($nicks as $id => $nick)
 	{
 		echo "    <td align=right style=\"padding: 0px 5px 0px 5px;\">";
-		if(@$item['credit'][$id])
+		if(array_key_exists($id, $item['credit']))
 		{
-			$amount=$item['credit'][$id]-$item['mult'][$id] * $item['debet'];
+			$amount = $item['credit'][$id] - $item['mult'][$id] * $item['debet'];
 			echo amount_to_html($amount);
 		}
 		else
@@ -262,7 +260,7 @@ foreach($activiteiten as $item)
 		$total_afr[$afr_id] = array();
 	foreach($nicks as $id => $nick)
 	{
-		if(@$item['credit'][$id])
+		if(array_key_exists($id, $item['credit']) or array_key_exists($id, $item['mult']))
 		{
 			$amount = $item['credit'][$id];
 			$person = $people->find($id);
