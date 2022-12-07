@@ -84,7 +84,7 @@ if(check_post_vars($popup)) {
 				WHERE pers_id=:id
 			";
 			$stm = $dbh->prepare($sql);
-			$stm->bindValue('id', $me['pers_id']);
+			$stm->bindValue('id', $_POST['pers_id']);
 			foreach ($info as $k => $v) {
 				if ($k!="password") {
 					$stm->bindValue($k, $v);
