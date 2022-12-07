@@ -140,7 +140,7 @@ function amount_to_str(float $amount): string
 function amount_to_html(float $amount): string
 {
 	$amount_str = amount_to_str($amount);
-	if($amount<0) {
+	if($amount<-0.004) {
 		return "<font color=red>$amount_str</font>";
 	} else {
 		return $amount_str;
