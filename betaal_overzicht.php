@@ -94,9 +94,7 @@ for($i=0;$i<$num_aan;$i++) {
 }
 echo ")\n";
 ?>
-function popup(link) {
-  window.open(link,'','toolbar=no,status=no,menubar=no,width=350px,height=270px,resizable=yes,scrollbars=yes')
-}
+<?= javascript_popup(); ?>
 function init() {
   document.getElementById('close').focus()
   for(var i=0;i<<?=$num_aan?>;i++) {

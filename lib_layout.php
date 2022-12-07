@@ -217,3 +217,20 @@ function init() {
 </body></html><?php
 	}
 }
+
+function javascript_popup(): string
+{
+	$js = <<<EOF
+		<script type="text/javascript" language="JavaScript1.2">
+		function popup(link) {
+			//window.open(link,'','toolbar=no,status=no,menubar=no,width=400px,height=400px,resizable=yes,scrollbars=yes')
+			window.open(link,'','popup=yes,width=800px,height=600px,resizable=yes,scrollbars=yes')
+		}
+		function popup_large(link) {
+			//window.open(link,'','toolbar=no,status=no,menubar=no,width=600px,height=400px,resizable=yes,scrollbars=yes')
+			window.open(link,'','popup=yes,width=800px,height=600px,resizable=yes,scrollbars=yes')
+		}
+		</script>
+	EOF;
+	return $js;
+}

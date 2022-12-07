@@ -23,6 +23,7 @@
 /* set $login, $db_conn */
 require_once("pennypool.php");
 require_once("lib_util.php");
+require_once("lib_layout.php");
 
 use \Doctrine\DBAL\ParameterType;
 
@@ -39,14 +40,7 @@ global $dbh, $login, $people;
 <head>
 <title><?=__("Huisrekening")?></title>
 <link rel=stylesheet title="Penny Pool" href="style.css">
-<script type="text/javascript" language="JavaScript1.2">
-function popup(link) {
-  window.open(link,'','toolbar=no,status=no,menubar=no,width=400px,height=400px,resizable=yes,scrollbars=yes')
-}
-function popup_large(link) {
-  window.open(link,'','toolbar=no,status=no,menubar=no,width=600px,height=400px,resizable=yes,scrollbars=yes')
-}
-</script>
+<?= javascript_popup(); ?>
 </head>
 <body><?php
 
