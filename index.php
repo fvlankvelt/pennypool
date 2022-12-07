@@ -97,9 +97,9 @@ $activiteiten = parse_activiteiten($res);
   </tr>
 </table>
 
-<table cellspacing=0 cellpadding=3 style="border: 1pt solid black;" align=center>
+<table cellspacing=0 cellpadding=3 style="border: 1pt solid black; border-collapse: collapse;" align=center>
   <tr>
-    <th colspan=2 style="color: #666;"><?=__("activiteiten")?>
+    <th colspan=2 style="color: #666; padding-top: 8pt; padding-bottom: 8pt;"><?=__("activiteiten")?>
       <small><a href="javascript:popup('activiteit.php')" style="color: #666;">(<?=__("nieuw")?>)</a></small>
     </th>
 <?php
@@ -156,7 +156,7 @@ $my_dept = calc_debts($current, $me);
 
 ?>
   <tr>
-    <th colspan=2 align=center><?=__("totaal")?></th>
+    <th  style="padding-bottom: 8pt;" colspan=2 align=center><?=__("totaal")?></th>
 <?php
 foreach($nicks as $id => $nick) {
 	echo "    <th align=right style=\"padding: 0px 5px 0px 5px;\">";
@@ -171,8 +171,8 @@ foreach($nicks as $id => $nick) {
 
 /* betalingen */
 ?>
-  <tr>
-    <th colspan=2 style="color: #666; padding-top: 8pt;"><?=__("betalingen")?></th>
+  <tr style=" border-top: 1pt solid black;">
+    <th colspan=2 style="color: #666; padding-top: 8pt; padding-bottom: 8pt;"><?=__("betalingen")?></th>
 <?php
 foreach($nicks as $id => $nick) { ?>
     <th>&nbsp;</th>
@@ -230,7 +230,7 @@ $sums = @$sums[0];
 
 ?>
   <tr>
-    <td colspan=2><?=__("andere betalingen")?></td>
+    <td style="padding-bottom: 8pt;" colspan=2><?=__("andere betalingen")?></td>
 <?php
 foreach($nicks as $id => $nick) {
 	echo "    <td align=right>";
@@ -277,8 +277,8 @@ foreach($total_bet as $afr_id => $sums) {
 
 $res = $dbh->executeQuery("SELECT * FROM afrekeningen ORDER BY date DESC");
 ?>
-  <tr>
-    <th colspan=2 style="color: #666; padding-top: 8;"><?=__("afrekeningen")?>
+  <tr style="border-top: 1pt solid black;">
+    <th colspan=2 style="color: #666; padding-top: 8pt; padding-bottom: 8pt;"><?=__("afrekeningen")?>
       <small><a href="javascript:popup_large('afrekening.php')" style="color: #666;">(<?=__("nieuw")?>)</a></small>
     </th>
 <?php  foreach($nicks as $id=>$nick) { ?>
