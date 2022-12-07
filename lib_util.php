@@ -53,62 +53,49 @@ function parse_activiteiten(Doctrine\DBAL\Result $res): array
 	/** @var people $people */
 	global $people;
 
-	// laad gegevens van alle mogelijke deelnemers
+	/* laad gegevens van alle mogelijke deelnemers */
 	$people->find();
 
-	$act_id = 0;
-	$item = array();
-	$total = 0.0;
-	$n = 0;
-	$act_ids = array();
+	/* first gather all data in a single data structure
+	 * $activiteiten has all activiteiten in order
+	 * $act_mapping maps $act_id to the correct array index of $activiteiten
+	 */
 	$activiteiten = array();
-
-	# TODO: rewrite this
+	$act_mapping = array();
 	while($row = $res->fetchAssociative())
 	{
-		if($row['act_id'] != $act_id)
-		{
-			if($act_id)
-			{
-				$item['total']  = $total;
-				$item['n']		= $n;
-				$item['debet']	= $item['total'] / $item['n'];
+		$act_id = $row['act_id'];
+		if (!array_key_exists($act_id, $act_mapping)) {
+			$activiteiten[] = array(
+				'act_id' => $row['act_id'],
+				'afr_id' => $row['afr_id'],
+				'name'   => $row['name'],
+				'date'   => $row['date'],
+				'credit' => array(),
+				'mult'   => array()
 
-				$activiteiten[] = $item;
-			}
-			$item = array();
-			$item['act_id'] = $row['act_id'];
-			$item['afr_id'] = $row['afr_id'];
-			$item['name']	= $row['name'];
-			$item['date']	= date_from_sql($row['date'])->format('Y-m-d');
-			$item['credit'] = array();
-			$total = 0.0;
-			$n = 0;
-
-			$act_id = $row['act_id'];
+			);
+			$act_mapping[$act_id] = array_key_last($activiteiten);
 		}
-		$total += $row['credit'];
 
-		$person = $people->find($row['pers_id']);
+		$this_act = &$activiteiten[$act_mapping[$act_id]];
 
-		if($person['type'] == 'person')
-			$item['mult'][$row['pers_id']] = $row['aantal'];
-		else
-			$item['mult'][$row['pers_id']] = 0;
+		$pers_id = $row['pers_id'];
+		$type    = $row['type'];
+		$mult    = $row['aantal'];
+		$credit  = $row['credit'];
 
-		$n += $item['mult'][$row['pers_id']];
+		$this_act['credit'][$pers_id] = $credit;
+		$this_act['mult'][$pers_id] = $type=='person' ? $mult : 0;
 
-		$item['credit'][$row['pers_id']] = $row['credit'];
-		if(!in_array($row['pers_id'], $act_ids))
-			$act_ids[] = $row['pers_id'];
 	}
-	if($act_id)
-	{
-		$item['total']  = $total;
-		$item['n']		= $n;
-		$item['debet']	= $item['total'] / $item['n'];
 
-		$activiteiten[] = $item;
+	/* now go through the entire array again to calculate totals etc */
+	foreach ($activiteiten as &$this_act)
+	{
+		$this_act['total'] = array_sum($this_act['credit']);
+		$this_act['n']     = array_sum($this_act['mult']);
+		$this_act['debet'] = $this_act['total'] / $this_act['n'];
 	}
 
 	return $activiteiten;
