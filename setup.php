@@ -104,11 +104,11 @@ function create_tables(\Doctrine\DBAL\Connection $conn)
 	}
 
 	/* add default user */
-	$cnt = $conn->prepare("SELECT COUNT() FROM `mensen`;")->executeQuery()->fetchOne();
+	$cnt = $conn->executeQuery("SELECT * FROM `mensen`")->rowCount();
 	if ($cnt===0) {
-		$conn->prepare(
+		$conn->executeStatement(
 			"INSERT INTO `mensen` (`pers_id`,`voornaam`,`nick`,`password`) VALUES (1,'User','user',null)"
-		)->executeQuery();
+		);
 	}
 
 }
@@ -246,7 +246,7 @@ or a new database user is used.</small>
 <?php
 	$dir=opendir("lang");
 	while($file=readdir($dir)) {
-		if(!preg_match(".php", $file) || $file=="new_lang.php")
+		if(!preg_match("/.php/", $file) || $file=="new_lang.php")
 			continue;
 		$lang=preg_replace("(.*).php","\\1",$file);
 		echo "    <option value=\"$lang\"";
