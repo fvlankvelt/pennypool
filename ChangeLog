@@ -1,0 +1,133 @@
+=== pennypool-0.5.4 ===
+
+2005-10-30  Frank van Lankvelt  <frnk@a-eskwadraat.nl>
+
+	* most files:
+	generate prettier HTML.
+
+2005-10-30  Frank van Lankvelt  <frnk@a-eskwadraat.nl>
+
+	* README:
+	renamed huisrekening to PennyPool and added a small
+	introduction.
+
+2005-10-29  Frank van Lankvelt  <frnk@a-eskwadraat.nl>
+
+	* index.php, afrekening_view.php, activiteit_view.php,
+	lib_util.php:
+	take into account the multiplicity (aantal) of each
+	participant.
+
+=== pennypool-0.5.3 ===
+
+2005-09-19  Frank van Lankvelt  <frnk@a-eskwadraat.nl>
+
+	* afrekening_eval.php:
+	fix payment selection upon creation of a new settlement.
+
+2005-09-17  Frank van Lankvelt  <frnk@a-eskwadraat.nl>
+
+	* VERSION:
+	added file which contains version number
+	
+2005-06-23  Frank van Lankvelt  <frnk@a-eskwadraat.nl>
+
+	* lib_util.php, index.php, afrekening_view.php:
+	display payments in mainscreen-view of afrekening.
+
+	* pennypool.php:
+	set up languange environment correctly.
+
+2005-06-22  Frank van Lankvelt  <frnk@a-eskwadraat.nl>
+
+	* index.php:
+	fixed warning displayed for using += and -= operator on
+	non-existent array entries.
+
+=== pennypool-0.5.2 ===
+
+2005-06-22  Frank van Lankvelt  <frnk@a-eskwadraat.nl>
+
+	* setup.php:
+	fixed another bug which prevented the user 'user' from being
+	entered into the "mensen" table.  All the thanks to Asheesh Aroia
+	for hanging in there.
+
+=== pennypool-0.5.1 ===
+
+2005-06-21  Frank van Lankvelt  <frnk@a-eskwadraat.nl>
+
+	* setup.php:
+	fixed a bug which caused the "mensen" table to be created
+	incorrectly upon first installation.
+
+=== pennypool-0.5 ===
+
+2005-06-12  Frank van Lankvelt  <frnk@a-eskwadraat.nl>
+
+	* persoon.php, persoon_eval.php, rekening.php, rekening_eval.php:
+	renamed files.  This is basically the start of a transition to 
+	english-base file, table and other names.
+
+	* most files, lang/new_lang.php:
+	internationalization support.  Penny Pool uses a very simple array
+	to store the translation strings.  It is possible to generate a new
+	initial translation by using lang/new_lang.php on the command line.
+
+	* setup.php:
+	added detection of previous table layout, so upgrading should be
+	a breeze.  The layout is somewhat more polished now.  Furthermore,
+	support for selecting a default language is now available.
+
+	* all:
+	renamed project to PennyPool.  Most (internal) names are still dutch,
+	but it is now at least possible to use an english interface.  Database
+	tables have stayed the same, with the exception of support in the user
+	table.  Users can have their own language preference.
+
+=== huisrekening-0.4.1 ===
+
+2005-06-12  Frank van Lankvelt  <frnk@a-eskwadraat.nl>
+
+	* afrekening_eval.php:
+	Fix bug which made it impossible to create afrekening
+
+=== huisrekening-0.4 ===
+
+2005-06-11  Frank van Lankvelt  <frnk@a-eskwadraat.nl>
+
+	* persoon_eval.php:
+	Do not allow person to be deleted when still active as
+	deelnemer.
+
+	* setup.php:
+	Support upgrade from previous versions.
+
+2005-06-09  Frank van Lankvelt  <frnk@a-eskwadraat.nl>
+
+	* setup.php:
+	Allow general host for database.
+	Patch from Thijs Kinkhorst <kink@kinkhorst.com>
+
+	* login.php:
+	Specify document type and add sleep.
+	Patch from Thijs Kinkhorst <kink@kinkhorst.com>
+
+	* index.php:
+	Display date of activiteiten.
+	Patch from Jacob Kleerekoper <neus@os9.nl>
+
+	* activiteit_eval.php:
+	Fix bug which makes it impossible to update an existing
+	activiteit.
+	Patch from Thijs Kinkhorst <kink@kinkhorst.com>
+
+	* most files
+	HTTP_POST_VARS moved to _POST
+	HTTP_GET_VARS moved to _GET
+
+	* huisrekening.php:
+	* login.php:
+	Use $_SESSION for session variables.
+	This makes huisrekening work in the default configuration
+	for PHP version >= 4.2.0, where register_globals is off.

@@ -1,0 +1,100 @@
+a {
+	text-decoration: none;
+	color: #000000;
+}
+a:hover {
+	text-decoration: underline;
+}
+a.plain {
+	text-decoration: underline;
+}
+tr.disabled {
+	background-color: transparent;
+}
+tr.disabled-hover {
+	background-color: #cccccc;
+}
+tr.enabled {
+	background-color: #ffffff;
+}
+tr.enabled-hover {
+	background-color: #cccccc;
+}
+td.input {
+	border: 0px;
+	color: #000000;
+	padding: 2px 5px 2px 5px;
+}
+td.disabled {
+	border: 0px;
+	color: #666666;
+	padding: 2px 5px 2px 5px;
+}
+th.cal {
+	background-color: transparent;
+	font-size: 8px;
+	text-align: right;
+	height: 11px;
+}
+td.cal {
+	background-color: transparent;
+	font-size: 8px;
+	text-align: right;
+	height: 11px;
+}
+td.cal-hover {
+	background-color: #cccccc;
+	font-size: 8px;
+	height: 11px;
+	text-align: right;
+}
+input[disabled] {
+	background-color: transparent;
+}
+input[type="text"],input[type="password"] {
+	border: 1px solid;
+	padding: 1px 1px 1px 1px;
+	height: 18px;
+}
+input[type="checkbox"] {
+	border: 1px solid;
+	color: #666666;
+	background-color: transparent;
+}
+select {
+	border: 1px solid black;
+	padding: 0px 0px 0px 0px;
+	background-color: transparent;
+}
+option {
+	border: 0px;
+	padding: 1px 5px 1px 5px;
+	background-color: #eeeeee;
+}
+input[type="submit"],input[type="button"],input[type="reset"] {
+	border: 2px solid;
+	background-color: #eeeeee;
+	padding: 3px 5px 3px 5px;
+	font-size: 80%;
+	font-weight: bold;
+}
+input.hover[type="submit"],input.hover[type="button"] {
+	background-color: #cccccc; 
+}
+input.debet {
+	text-align: right;
+}
+input.credit {
+	text-align: right;
+}
+label {
+	font-weight: bold;
+}
+body {
+	color: #000000;
+	background-color: #eeeeee;
+}
+.error {
+	color: #cc0000;
+	background-color: transparent;
+}

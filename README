@@ -1,0 +1,112 @@
+Penny Pool
+
+  This is PennyPool, a tool to ease expense sharing among a group.  Its
+  main goal is to promote lazyness, by making it trivial to administer
+  shared expenses.
+
+
+Introduction
+
+  A well-known problem in groups of people is how to distribute costs of
+  collective payments.  What usually happens is that one person pays and
+  expects the rest of the group to then pay their respective shares to
+  him / her.  This is not a problem for a single incident, but when
+  multiple events occur, with different persons paying, it would clearly
+  be better to pool these events.  Payments can then be set up within
+  the group, such that the number of money transfers is minimized.
+
+  PennyPool helps in administering these kinds of expenses in the form
+  of a simple web application.  First of all, the mere fact that
+  expenses can be entered in a central location (to which everyone has
+  access) makes it clear to everyone who should pay what.  Furthermore,
+  it is possible to group these expenses in settlements, which can be
+  used as a starting point for actual payments among the members of the
+  group.  These payments can also be entered and attached to the
+  settlement.  In this way, the progress of the settlement can be seen
+  and it is obvious how much should still be paid.
+
+
+Installation / Upgrade Instructions
+
+  Unpack pennypool-x.x.x.tar.gz in a directory accessible by the webserver
+    cd /var/www 		(Debian default)
+    tar zxvf pennypool-x.x.x.tar.gz
+  since you are reading this file, I guess this step shouldn't be too
+  much of a problem.
+
+  If you wish to upgrade PennyPool from a previous version, copy
+  the old config.php into the new installation.
+
+  Now point a browser to the site, http://myhost/pennypool-x.x.x/setup.php,
+  and fill out the form.  Please note that this form is only for your
+  convenience, the potentially required root password will not be saved
+  in any form.  The database root user and password are necessary when a
+  new database or a new database user must be created.
+
+  Paste the code you see after submission into
+    /var/www/pennypool-x.x.x/config.php
+
+  Make sure that the webserver has access to it:
+    chmod 644 config.php
+
+  And you may want to disable setup:
+    chmod 600 setup.php
+
+  After this step, go to http://myhost/pennypool-x.x.x/login.php?login=user
+  and login without a password.  You can later on delete this account.
+  (oh, don't forget to create another account before doing this, or you
+  won't be able to login again ;-)
+
+  You'll probably want to have an URL that is independent of the
+  particular version of PennyPool that is installed.  Now would be a
+  good time to create a symbolic link
+    ln -s pennypool-x.x.x pennypool
+  or simply rename the directory
+    mv pennypool-x.x.x pennypool
+
+
+Requirements
+
+  - php 4.x, 5.x
+  - apache
+  - mysql
+
+
+Details
+
+  Since this is a very simple package, don't expect it to do complicated 
+  things.  It is however supposed to work easily, so if you encounter any
+  problems, please contact me, frnk@a-eskwadraat.nl
+
+  PennyPool has its own table of personal data, but since there are 
+  already too many ways to store these (and most of the data is not relevant
+  for our purposes), this is a very simple table.  Beware however, should 
+  you want to access the data through another interface, that the passwords
+  are encrypted.
+
+  Within PennyPool, anyone can alter anyones data.  So only use it with
+  people that you trust.
+
+  pennypool uses five tables, 
+    'pennypool_mensen',
+		for personal data and accounts
+    'pennypool_activiteiten',
+		for events
+    'pennypool_deelnemers',
+		for participant info
+    'pennypool_betalingen',
+		for person to person transactions
+    'pennypool_afrekeningen',
+		for groupings of events and p2p transactions
+
+  Only data entered on forms is stored, so in principle accuracy is limited
+  by MySQL/PHP.  The 'pennypool_' prefix is configurable, so that
+  multiple installations can coexist within the same database.
+
+
+License
+
+  This software is distributed under the terms of the GNU General Public
+  License, Version 2.
+
+Enjoy PennyPool, all feedback is welcomed.
