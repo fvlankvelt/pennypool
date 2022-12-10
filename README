@@ -1,7 +1,7 @@
 Penny Pool
 
   This is PennyPool, a tool to ease expense sharing among a group.  Its
-  main goal is to promote lazyness, by making it trivial to administer
+  main goal is to promote laziness, by making it trivial to administer
   shared expenses.
 
 
@@ -67,27 +67,28 @@ Installation / Upgrade Instructions
 
 Requirements
 
-  - php 4.x, 5.x
-  - apache
-  - mysql
-
+  - php 8.x
+  - php ext-pdo
+  - appropriate pdo datapase module (e.g, ext-pdo_sqlite)
+  - doctrine/dbal
+  - a webserver to run the php
 
 Details
 
-  Since this is a very simple package, don't expect it to do complicated 
+  Since this is a very simple package, don't expect it to do complicated
   things.  It is however supposed to work easily, so if you encounter any
   problems, please contact me, frnk@a-eskwadraat.nl
 
-  PennyPool has its own table of personal data, but since there are 
+  PennyPool has its own table of personal data, but since there are
   already too many ways to store these (and most of the data is not relevant
-  for our purposes), this is a very simple table.  Beware however, should 
+  for our purposes), this is a very simple table.  Beware however, should
   you want to access the data through another interface, that the passwords
   are encrypted.
 
   Within PennyPool, anyone can alter anyones data.  So only use it with
   people that you trust.
 
-  pennypool uses five tables, 
+  pennypool uses five tables,
     'pennypool_mensen',
 		for personal data and accounts
     'pennypool_activiteiten',
