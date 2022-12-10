@@ -90,7 +90,7 @@ exit();
 			exit();
 		}
 		/* TODO: should probably show an error here */
-		$login=$_GET['login'];
+		$login="";
 	}
 	sleep(1);
 } else if(@$_GET['login']) {
