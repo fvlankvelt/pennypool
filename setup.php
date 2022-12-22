@@ -246,9 +246,9 @@ or a new database user is used.</small>
 <?php
 	$dir=opendir("lang");
 	while($file=readdir($dir)) {
-		if(!preg_match("/.php/", $file) || $file=="new_lang.php")
+		if(!preg_match("/\.php$/", $file) || $file=="new_lang.php")
 			continue;
-		$lang=preg_replace("(.*).php","\\1",$file);
+		$lang=preg_replace("/(.*).php/","\\1",$file);
 		echo "    <option value=\"$lang\"";
 		if(@$_POST['lang'] == $lang)
 			echo " selected";

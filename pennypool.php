@@ -165,9 +165,9 @@ function get_languages()
 	$languages=array("nl");
 	$dir=opendir("lang");
 	while($file=readdir($dir)) {
-		if(!preg_match("\.php$", $file) || $file=="new_lang.php")
+		if(!preg_match("/\.php$/", $file) || $file=="new_lang.php")
 			continue;
-		$languages[]=preg_replace("(.*).php$","\\1",$file);
+		$languages[]=preg_replace("/(.*).php$/","\\1",$file);
 	}
 	return $languages;
 }
