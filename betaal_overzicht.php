@@ -25,81 +25,76 @@
 	- uitsplitsen naar afrekening.
  */
 
+require_once 'vendor/autoload.php';
+use \Doctrine\DBAL\ParameterType;
+
 require_once("pennypool.php");
 include_once("lib_layout.php");
+include_once("lib_util.php");
 
-function datum_to_html($date) {
-	list($year,$month,$day)=split('-',$date);
-	return strftime("%d %b %y", mktime(0, 0, 0, $month, $day, $year));
-	/*
-	$months=array('jan','feb','mar','apr','mei','jun','jul','aug',
-						'sep','okt','nov','dec');
-	if(substr($day,0,1)=='0')
-		$day=substr($day,1,1);
-	return $day." ".$months[$month-1]." '".substr($year,2,2);
-	*/
+/**
+ * @var Doctrine\DBAL\Connection $dbh
+ */
+global $dbh;
+
+function datum_to_html(DateTime|null $date) : string {
+	if (!$date) return "unknown";
+	return $date->format('Y-m-d');
 }
 
 $me=my_data();
-$res_aan=mysql_query("SELECT bet.van as van,bet.naar as naar,".
-		"pers.nick as nick, datum,bedrag ".
-		"FROM ".$db['prefix']."betalingen bet, ".$db['prefix']."mensen pers ".
-		"WHERE bet.van=".$me['pers_id']." AND pers.pers_id=bet.naar ".
-		"AND bet.afr_id=0 ".
-		"ORDER BY bet.datum DESC LIMIT 20",$db_conn);
-$res_van=mysql_query("SELECT bet.van as van,bet.naar as naar,".
-		"pers.nick as nick, datum,bedrag ".
-		"FROM ".$db['prefix']."betalingen bet, ".$db['prefix']."mensen pers ".
-		"WHERE bet.naar=".$me['pers_id']." AND pers.pers_id=bet.van ".
-		"AND bet.afr_id=0 ".
-		"ORDER BY bet.datum DESC LIMIT 20",$db_conn);
-$num_aan=mysql_num_rows($res_aan);
-$num_van=mysql_num_rows($res_van);
-$i=0;
-$aan=array();
-$van=array();
-while($i<$num_aan || $i<$num_van) {
-	if($i<$num_aan) {
-		$aan[]=mysql_fetch_assoc($res_aan);
-	}
-	if($i<$num_van) {
-		$van[]=mysql_fetch_assoc($res_van);
-	}
-	$i++;
-}
-mysql_free_result($res_aan);
-mysql_free_result($res_van);
+$res_aan = $dbh->executeQuery("
+		SELECT bet.van AS `van`, bet.naar AS `naar`, pers.nick AS `nick`, datum, bedrag
+		FROM betalingen AS `bet`, mensen AS `pers`
+		WHERE bet.van=? AND pers.pers_id=bet.naar AND bet.afr_id=0
+		ORDER BY datum DESC
+	",[$me['pers_id']], [ParameterType::INTEGER]);
+$res_van = $dbh->executeQuery("
+		SELECT bet.van AS `van`, bet.naar AS `naar`, pers.nick AS `nick`, datum, bedrag
+		FROM betalingen AS `bet`, mensen AS `pers`
+		WHERE bet.naar=? AND pers.pers_id=bet.van AND bet.afr_id=0
+		ORDER BY datum DESC
+	",[$me['pers_id']], [ParameterType::INTEGER]);
+$aan = $res_aan->fetchAllAssociative();
+$van = $res_van->fetchAllAssociative();
+$num_aan = count($aan);
+$num_van = count($van);
 
-?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN" 
+function fix_dates(array &$data) {
+	foreach ($data as &$row) {
+		$row['datum'] = date_from_sql($row['datum']); /* annoyingly, this isn't automatic */
+	}
+	return;
+}
+fix_dates($aan);
+fix_dates($van);
+
+?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 <head>
 <title><?=__("Betalingen")?></title>
 <link rel=stylesheet title="Penny Pool" href="style.css">
 <script language="JavaScript">
-<?
+<?php
 echo "var van=new Array(";
 for($i=0;$i<$num_van;$i++) {
 	if($i!=0)
 		echo ",\n";
-	$date=split('-',$van[$i]['datum']);
-	echo "'van=".$van[$i]['van']."&naar=".$van[$i]['naar'].
-		"&datum=".$date[2]."-".$date[1]."-".$date[0]."'";
+	$date=datum_to_html($van[$i]['datum']);
+	echo "'van={$van[$i]['van']}&naar={$van[$i]['naar']}&datum={$date}'";
 }
 echo ")\n";
 echo "var aan=new Array(";
 for($i=0;$i<$num_aan;$i++) {
 	if($i!=0)
 		echo ",\n";
-	$date=split('-',$aan[$i]['datum']);
-	echo "'van=".$aan[$i]['van']."&naar=".$aan[$i]['naar'].
-		"&datum=".$date[2]."-".$date[1]."-".$date[0]."'";
+	$date=datum_to_html($aan[$i]['datum']);
+	echo "'van={$aan[$i]['van']}&naar={$aan[$i]['naar']}&datum={$date}'";
 }
 echo ")\n";
 ?>
-function popup(link) {
-  window.open(link,'','toolbar=no,status=no,menubar=no,width=350px,height=270px,resizable=yes,scrollbars=yes')
-}
+<?= javascript_popup(); ?>
 function init() {
   document.getElementById('close').focus()
   for(var i=0;i<<?=$num_aan?>;i++) {
@@ -175,7 +170,7 @@ function init() {
     <th><?=__("van")?></th>
     <th><?=__("bedrag")?></th>
   </tr>
-<?
+<?php
 $i=0;
 while($i<$num_aan || $i<$num_van) {
 	if($i<$num_aan) {
@@ -207,7 +202,7 @@ while($i<$num_aan || $i<$num_van) {
 <p align=center><a href="javascript:popup('betaling.php')"><?=__("nieuwe betaling")?></a>
 </p>
 <form><p align=center>
-<?
+<?php
 	$button = new button("close");
 	$button->id = "close";
 	$button->onclick = "window.opener.location='index.php';window.close()";

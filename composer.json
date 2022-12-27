@@ -1,0 +1,13 @@
+{
+    "name": "frnk/pennypool",
+    "type": "project",
+	"description": "This is PennyPool, a tool to ease expense sharing among a group.  Its main goal is to promote laziness, by making it trivial to administer shared expenses.",
+    "require": {
+		"php": ">8.0",
+		"ext-session": ">8.0",
+		"ext-hash": ">8.0",
+		"ext-pdo":  ">8.0",
+		"ext-pdo_sqlite": ">8.0",
+        "doctrine/dbal": "^3.5"
+    }
+}

@@ -20,12 +20,21 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+require_once 'vendor/autoload.php';
+use \Doctrine\DBAL\ParameterType;
+
 
 require_once("pennypool.php");
 include_once("lib_layout.php");
 include_once("lib_util.php");
 
-function check_post_vars($popup) {
+/**
+ * @var Doctrine\DBAL\Connection $dbh
+ */
+global $dbh, $pp;
+
+function check_post_vars(popup_eval $popup): bool
+{
 	global $_POST;
 
 	if(@$_POST['nick']=='') {
@@ -46,7 +55,7 @@ function check_post_vars($popup) {
 
 $popup = new popup_eval("Persoon opslaan", "person.php");
 
-if(check_post_vars(&$popup)) {
+if(check_post_vars($popup)) {
 	$info=array();
 	foreach(array('voornaam','achternaam','nick','email','rekeningnr',
 				'password', 'lang') as $key) {
@@ -57,32 +66,51 @@ if(check_post_vars(&$popup)) {
 		$me=my_data();
 		if($_POST['action'] != 'delete')
 		{
-			/* check for $login=='nick' van pers_id in db,
-			   update $login als dit het geval is */
-			if($me['pers_id']==$_POST['pers_id'])
-			{
-				$_SESSION['login']=$info['nick'];
-				$_SESSION['lang']=$info['lang'];
+			$sql_passwd = "";
+			if ($info['password']!='') {
+				$info['passwd_hash'] = password_hash($info['password'],  PASSWORD_ARGON2ID);
+				$sql_passwd = ",password=:passwd_hash";
 			}
-			$passwd=addSlashes(crypt($info['password'],randstr(2)));
-			$res=mysql_query("UPDATE ".$db['prefix']."mensen SET ".
-						 "voornaam='".$info['voornaam']."',".
-						 "achternaam='".$info['achternaam']."',".
-						 "nick='".$info['nick']."',".
-						 "email='".$info['email']."',".
-						 "rekeningnr='".$info['rekeningnr']."',".
-						 "lang='".$info['lang']."'".
-						 ($info['password']!=''?
-						  	",password='$passwd' ":" ").
-						 "WHERE pers_id=".$_POST['pers_id'],$db_conn);
+
+			$sql = "
+				UPDATE mensen
+				SET	voornaam=:voornaam,
+				 	achternaam=:achternaam,
+					nick=:nick,
+					email=:email,
+					rekeningnr=:rekeningnr,
+					lang=:lang
+					$sql_passwd
+				WHERE pers_id=:id
+			";
+			$stm = $dbh->prepare($sql);
+			$stm->bindValue('id', $_POST['pers_id']);
+			foreach ($info as $k => $v) {
+				if ($k!="password") {
+					$stm->bindValue($k, $v);
+				}
+			}
+			$cnt=$stm->executeStatement();
+			if ($cnt===1) {
+				/* check for $login=='nick' van pers_id in db,
+				   update $login als dit het geval is */
+				if($me['pers_id']==$_POST['pers_id'])
+				{
+					$_SESSION['login']=$info['nick'];
+					$_SESSION['lang']=$info['lang'];
+				}
+			}
+			else
+			{
+				error("updating", "num rows changed: $cnt");
+			}
 		}
 		else
 		{
-			$res=mysql_query("SELECT count(*) ".
-							 "FROM ".$db['prefix']."deelnemers ".
-							 "WHERE pers_id=".$_POST['pers_id'],$db_conn);
-			$row=mysql_fetch_row($res);
-			if($row[0] > 0)
+			$cnt=$dbh->executeQuery("SELECT count(*) FROM deelnemers WHERE pers_id=?",
+				[$_POST['pers_id']], [ParameterType::INTEGER])->fetchOne();
+
+			if($cnt > 0)
 			{
 					$popup->set_error(__("Persoon is een deelnemer aan activiteiten."));
 					$popup->render_error($_POST);
@@ -92,40 +120,45 @@ if(check_post_vars(&$popup)) {
 			{
 				$popup->opener = "logout.php";
 			}
-			$res=mysql_query("DELETE FROM ".$db['prefix']."mensen ".
-						"WHERE pers_id=".$_POST['pers_id'],$db_conn);
-			$res=mysql_query("DELETE FROM ".$db['prefix']."deelnemers ".
-						"WHERE pers_id=".$_POST['pers_id'],$db_conn);
-			$res=mysql_query("DELETE FROM ".$db['prefix']."betalingen ".
-						"WHERE van=".$_POST['pers_id'].
-						  " OR naar=".$_POST['pers_id'],$db_conn);
+
+			$dbh->executeStatement("DELETE FROM mensen     WHERE pers_id=?",
+				[$_POST['pers_id']], [ParameterType::INTEGER]);
+			$dbh->executeStatement("DELETE FROM deelnemers WHERE pers_id=?",
+				[$_POST['pers_id']], [ParameterType::INTEGER]);
+			$dbh->executeStatement("DELETE FROM betalingen WHERE van=? OR naar=?",
+				[$_POST['pers_id'],$_POST['pers_id']],
+				[ParameterType::INTEGER, ParameterType::INTEGER]);
 		}
 	}
 	else
 	{
-		$res=mysql_query("SELECT * FROM ".$db['prefix']."mensen ".
-						 "WHERE nick='".$info['nick']."'",$db_conn);
-		if(mysql_num_rows($res))
+		$cnt=$dbh->executeQuery("SELECT count(*) FROM mensen WHERE nick=?",
+			[$info['nick']], [ParameterType::STRING])->fetchOne();
+		if($cnt)
 		{
 			$popup->set_error(__("Bijnaam wordt al gebruikt.  Kies aub een andere naam."));
 			$popup->render_error($_POST);
 			exit();
 		}
-		$passwd=addSlashes(crypt($info['password'],randstr(2)));
-		$res=mysql_query("INSERT INTO ".$db['prefix']."mensen ".
-						 "(voornaam,achternaam,nick,email,rekeningnr,".
-						 "password,lang) VALUES ".
-						 "('".$info['voornaam']."',".
-						 "'".$info['achternaam']."',".
-						 "'".$info['nick']."',".
-						 "'".$info['email']."',".
-						 "'".$info['rekeningnr']."',".
-						 "'".$passwd."','".$info['lang']."')",$db_conn);
+
+		$info['passwd_hash'] = password_hash($info['password'],  PASSWORD_ARGON2ID);
+		$sql = "
+			INSERT INTO mensen (voornaam,achternaam,nick,email,rekeningnr,password,lang)
+			VALUES (:voornaam,:achternaam,:nick,:email,:rekeningnr,:passwd_hash,:lang)
+		";
+		$stm = $dbh->prepare($sql);
+		foreach ($info as $k => $v) {
+			if ($k!="password") {
+				$stm->bindValue($k, $v, ParameterType::STRING);
+			}
+		}
+
+		$cnt=$stm->executeStatement();
 	}
 
 	$popup->render_ok();
 
-} else { 
+} else {
 
 	$popup->render_error($_POST);
 }

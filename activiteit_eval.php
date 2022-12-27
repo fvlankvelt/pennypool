@@ -20,22 +20,30 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+require_once 'vendor/autoload.php';
+use \Doctrine\DBAL\ParameterType;
 
-/* shouldn't be necessary */
 require_once("pennypool.php");
 include_once("lib_layout.php");
+include_once("lib_util.php");
+
+/**
+ * @var Doctrine\DBAL\Connection $dbh
+ */
+global $dbh;
 
 function check_post_vars($popup) {
+	/** @var people $people */
 	global $people;
 
-	if(@$_POST['name']=='' || @$_POST['date']=='')
+	if(@$_POST['name']=='')
 	{
-		$popup->set_error(__("Geen naam en/of datum"));
+		$popup->set_error(__("Geen naam"));
 		return 0;
 	}
 
-	$date=split('-',$_POST['date']);
-	if(count($date)!=3)
+
+	if(!isset($_POST['date']) or date_to_sql($_POST['date'])===false)
 	{
 		$popup->set_error(__("Datum is ongeldig"));
 		return 0;
@@ -43,7 +51,7 @@ function check_post_vars($popup) {
 	if($_POST['action'] != 'delete')
 	{
 		$found_person = false;
-		$ids = split(',',$_POST['ids']);
+		$ids = explode(',', $_POST['ids']);
 		$nicks = $people->nick($ids);
 		for($i = 0; $i < count($ids); $i++)
 		{
@@ -66,54 +74,50 @@ function check_post_vars($popup) {
 
 $popup = new popup_eval(__("Activiteit eval"), "activiteit.php");
 
-if(check_post_vars(&$popup))
+if(check_post_vars($popup))
 {
-	$date=split('-',$_POST['date']);
+	$date_sql = date_to_sql($_POST['date']);
+
 	$insert_deelnemers=true;
 	if(!@$_POST['act_id'])
 	{
-		$res=mysql_query("INSERT INTO ".$db['prefix']."activiteiten (name,date) ".
-				 	"VALUES ('".addSlashes($_POST['name'])."','".
-				 		$date[2]."-".$date[1]."-".$date[0]."')",$db_conn);
-		$act_id=mysql_insert_id();
+		$dbh->executeStatement("INSERT INTO activiteiten (name,date) VALUES (?,?)",
+			[$_POST['name'], $date_sql], [ParameterType::STRING, ParameterType::STRING]);
+		$act_id=$dbh->lastInsertId();
 	}
 	else
 	{
 		$act_id=$_POST['act_id'];
 		if($_POST['action'] != 'delete')
 		{
-			$res=mysql_query("UPDATE ".$db['prefix']."activiteiten ".
-						 "SET name='".addSlashes($_POST['name'])."', ".
-						 "date='".$date[2]."-".$date[1]."-".$date[0]."' ".
-						 "WHERE act_id=".$act_id,
-						 $db_conn);
-			$res=mysql_query("DELETE FROM ".$db['prefix']."deelnemers ".
-						 "WHERE act_id=".$act_id,$db_conn);
+			$dbh->executeStatement("UPDATE activiteiten SET name=?, date=? WHERE act_id=?",
+				[$_POST['name'],$date_sql,$act_id], [ParameterType::STRING, ParameterType::STRING, ParameterType::INTEGER]);
+
+			$dbh->executeStatement("DELETE FROM deelnemers WHERE act_id=:id",
+				[$act_id], [ParameterType::INTEGER]);
 		}
 		else
 		{
-			$res=mysql_query("DELETE FROM ".$db['prefix']."activiteiten ".
-						"WHERE act_id=".$act_id,$db_conn);
-			$res=mysql_query("DELETE FROM ".$db['prefix']."deelnemers ".
-						"WHERE act_id=".$act_id,$db_conn);
+			$dbh->executeStatement("DELETE FROM activiteiten WHERE act_id=?",
+				[$act_id], [ParameterType::INTEGER]);
+			$dbh->executeStatement("DELETE FROM deelnemers WHERE act_id=?",
+				[$act_id], [ParameterType::INTEGER]);
 		}
 	}
 	if(!@$_POST['act_id'] || $_POST['action'] != 'delete')
 	{
-		$ids=split(',',$_POST['ids']);
+		$ids=explode(',', $_POST['ids']);
 		for($i=0;$i<count($ids);$i++)
 		{
 			if(@$_POST['credit_'.$i]=='yes')
 			{
-				$mult = 0;
-				if(isset($_POST["id_{$i}_mult"]))
-					$mult = addSlashes($_POST["id_{$i}_mult"]);
-				$res = mysql_query("INSERT INTO ".$db['prefix']."deelnemers ".
-						 	"(act_id,pers_id,credit,aantal) VALUES ".
-						 	"($act_id,{$ids[$i]},'".
-						 	addSlashes($_POST["id_{$i}_credit"])."',".
-							$mult.")",
-						 	$db_conn);
+				$credit = array_key_exists("id_{$i}_credit", $_POST) ? $_POST["id_{$i}_credit"] : 0;
+				$mult   = array_key_exists("id_{$i}_mult",   $_POST) ? $_POST["id_{$i}_mult"  ] : 0;
+
+				$dbh->executeStatement("INSERT INTO deelnemers (act_id, pers_id, credit, aantal) VALUES (?,?,?,?)",
+					[$act_id,$ids[$i],$credit,$mult],
+					[ParameterType::INTEGER, ParameterType::INTEGER, ParameterType::STRING, ParameterType::INTEGER]
+				);
 			}
 		}
 	}
@@ -121,6 +125,6 @@ if(check_post_vars(&$popup))
 	$popup->render_ok();
 }
 else
-{ 
+{
 	$popup->render_error($_POST);
 }

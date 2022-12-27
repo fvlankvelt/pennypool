@@ -26,31 +26,39 @@
 		  <me>.php,POST_VARS	-> edit verkeerde velden
  */
 
+require_once 'vendor/autoload.php';
+use \Doctrine\DBAL\ParameterType;
+
 require_once("pennypool.php");
 include_once("lib_cal.php");
 include_once("lib_layout.php");
+include_once("lib_util.php");
 
-$res=mysql_query("SELECT * FROM ".$db['prefix']."mensen ".
-				 "ORDER BY type DESC, nick ASC", $db_conn);
+/**
+ * @var Doctrine\DBAL\Connection $dbh
+ * @var int $mult_divider
+ */
+global $dbh, $mult_divider;
+
+$res = $dbh->executeQuery("SELECT * FROM mensen ORDER BY type DESC, nick ASC");
 $ids = array();
 $persons = array();
 $accounts = 0;
-while($row=mysql_fetch_assoc($res))
+while($row=$res->fetchAssociative())
 {
 	$row['checked'] = 0;
 	$row['credit']  = '0.00';
-	$row['mult'] = 1;
+	$row['mult'] = $mult_divider;
 	$ids[] = $row['pers_id'];
 	$persons[$row['pers_id']] = $row;
 	if($row['type'] == 'rekening')
 		$accounts++;
 }
-mysql_free_result($res);
 
 if(!@$_POST && !@$_GET)
 {
 	$title = __("Nieuwe activiteit");
-	$date = date('d-n-Y');
+	$date = new DateTime("now");
 	$name = "";
 }
 else if(@$_POST['ids'])
@@ -75,13 +83,15 @@ else if(@$_POST['ids'])
 			$persons[$ids[$i]]['mult'] = $_POST['id_'.$i.'_mult'];
 		}
 	}
-	if(@$_POST['date'])
-	{
-		$date=$_POST['date'];
+	if(@$_POST['date']) {
+		$date = DateTime::createFromFormat('!d-m-Y',$_POST['date']);
+	} else {
+		$date = new DateTime("now");
 	}
-	if(@$_POST['name'])
-	{
-		$name=$_POST['name'];
+	if(@$_POST['name']) {
+		$name = $_POST['name'];
+	} else {
+		$name = "";
 	}
 }
 else if (@$_GET['act_id'])
@@ -90,38 +100,36 @@ else if (@$_GET['act_id'])
 	$title = __("Activiteit bewerken");
 	$act_id = $_GET['act_id'];
 
-	$res = mysql_query("SELECT pers_id,credit,aantal ".
-					   "FROM ".$db['prefix']."deelnemers deeln ".
-					   "WHERE act_id=$act_id", $db_conn);
-	while($row = mysql_fetch_assoc($res))
+	$res = $dbh->executeQuery("SELECT pers_id,credit,aantal FROM deelnemers WHERE act_id=?",
+		[$act_id], [ParameterType::INTEGER]);
+	while($row = $res->fetchAssociative())
 	{
 		$persons[$row['pers_id']]['checked'] = 1;
-		$persons[$row['pers_id']]['credit']  = $row['credit'];
+		$persons[$row['pers_id']]['credit']  = amount_to_str($row['credit']);
 		$persons[$row['pers_id']]['mult']    = $row['aantal'];
 	}
-	mysql_free_result($res);
 
-	$res = mysql_query("SELECT name,date ".
-					   "FROM ".$db['prefix']."activiteiten ".
-					   "WHERE act_id=$act_id", $db_conn);
-	$row = mysql_fetch_assoc($res);
+	$row = $dbh->executeQuery("SELECT name,date from activiteiten WHERE act_id=?",
+		[$act_id], [ParameterType::INTEGER])->fetchAssociative();
 	$name = $row['name'];
+	/*
 	if($row['date'] != '0000-00-00')
 	{
-		$tmpdate = split('-',$row['date']);
+		$tmpdate = explode('-', $row['date'], 3);
 		$date = $tmpdate[2]."-".$tmpdate[1]."-".$tmpdate[0];
 	}
 	else
 	{
 		$date = date('d-n-Y');
 	}
-	mysql_free_result($res);
+	*/
+	$date = date_from_sql($row['date']);
 }
 
 $cal = new calendar("date",$date);
 $form = new form("activiteit_eval.php", (@$act_id?true:false));
 
-?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN" 
+?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 <head>
@@ -286,7 +294,7 @@ active_row.prototype.uncheck=function() {
   this.cache=this.credit.value
   this.credit.value='0.00'
   update_total()
-} 
+}
 
 function select_mult(id,i) {
   row=document.getElementById('id_'+id).obj
@@ -304,7 +312,7 @@ function cancel(id) {
   row.cancel=true
 }
 </script>
-<?
+<?php
 	$cal->render_js();
 ?>
 <script language="JavaScript">
@@ -319,24 +327,24 @@ function init() {
   for(var i = <?=$accounts?>; i < number_of_persons; i++) {
     row[i] = new active_row(i, false)
   }
-<?
+<?php
 	for($i = 0; $i < count($persons); $i++) {
 		echo "  row[$i].mult.value={$persons[$ids[$i]]["mult"]}\n";
 	}  ?>
   update_total()
-<?	$cal->render_js_init(); ?>
+<?php	$cal->render_js_init(); ?>
 }
 </script>
 <link rel=stylesheet title="Penny Pool" href="style.css">
 </head>
 <body onload="javascript:init()">
 <h1 align=center><?=$title?></h1>
-<?
+<?php
 	$form->head();
 
 if(@$act_id) { ?>
 <input type=hidden name=act_id value="<?=$act_id?>">
-<? } ?>
+<?php } ?>
 <input type=hidden name=ids value="<?=implode(',',$ids)?>">
 <!-- Start Activiteit -->
 <table cellpadding=1 cellspacing=0 border=0 align=center>
@@ -345,7 +353,7 @@ if(@$act_id) { ?>
 <td class="input"><input type=text id="name" name="name" size=30 style="font-size: 80%;" value="<?=$name?>"></td></tr>
 <tr><td align=right><label for="date"><?=__("datum")?>:</label></td>
 <td class="disabled" valign=top style="width: 80px;">
-<? $cal->render_html(); ?>
+<?php $cal->render_html(); ?>
 </td></tr>
 </tbody>
 </table><br>
@@ -360,43 +368,43 @@ if(@$act_id) { ?>
   <th><?=__("credit")?></th>
   <th style="color: #660000;"><?=__("debet")?></th>
 </tr>
-<? 
+<?php
 	for($i = 0; $i < count($persons); $i++)
 	{
 		$person = $persons[$ids[$i]];
 	?>
 <tr style="background-color: #ffffff;">
-  <td><input type=checkbox id='id_<?=$i?>' name='credit_<?=$i?>' value='yes'<?
+  <td><input type=checkbox id='id_<?=$i?>' name='credit_<?=$i?>' value='yes'<?php
 	if($person['checked'])
 		echo " checked";
 ?>>&nbsp;<?=$person['nick']?></input></td>
   <td align=center class="input">
-<?  if($person['type'] == "person") { ?>
-    <select name='id_<?=$i?>_mult' id='id_<?=$i?>_mult' onclick="cancel(<?=$i?>)">
-<?
-		for($j = 1; $j < 8; $j++) 
+<?php  if($person['type'] == "person") { ?>
+    <select name='id_<?=$i?>_mult' id='id_<?=$i?>_mult' onclick="cancel(<?=$i?>)" onchange="select_mult(<?=$i?>, this.value)">
+<?php
+		for($j = 1; $j < 6*$mult_divider; $j++)
 		{
 			echo "      <option name=\"$j\" value=\"$j\"";
 			if($person['mult'] == $j)
 				echo " selected";
-			echo " onclick=\"select_mult($i,$j)\">$j</option>\n";
+			echo ">".($j/$mult_divider)."</option>\n";
 		}
 	?>
     </select>
-<?	} else {
+<?php	} else {
 	echo "&nbsp;";
 	} ?>
   </td>
   <td align=center class="input">
-    <input type=text size=8 class="credit" name='id_<?=$i?>_credit' 
-      id='id_<?=$i?>_credit' value="<? 
+    <input type=text size=8 class="credit" name='id_<?=$i?>_credit'
+      id='id_<?=$i?>_credit' value="<?php
 		echo (@$person['credit']?$person['credit']:"0.00"); ?>"></td>
   <td align=center class="input">
-<?	if($person['type'] == 'person') { ?>
+<?php	if($person['type'] == 'person') { ?>
     <input type=text size=8 value="0.00" class="debet" id='id_<?=$i?>_debet' disabled>
-<?	} ?></td>
+<?php	} ?></td>
 </tr>
-<?  } ?>
+<?php  } ?>
 <tr>
   <th><?=__("totaal")?></th>
   <td class="input" colspan=2 align=center>
@@ -407,7 +415,7 @@ if(@$act_id) { ?>
 </table><br>
 <!-- Eind Deelnemers -->
 
-<?
+<?php
 	$form->foot();
 
 ?></body></html>

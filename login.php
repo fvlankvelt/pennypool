@@ -20,6 +20,17 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+require_once 'vendor/autoload.php';
+
+use \Doctrine\DBAL\DriverManager;
+use \Doctrine\DBAL\ParameterType;
+
+/**
+ * @var string[] $db
+ * @var string[] $pp
+ */
+global $db, $pp;
+
 // select default language
 if(isset($pp['lang']))
 	include_once("lang/".$pp['lang'].".php");
@@ -44,10 +55,10 @@ if(!file_exists('config.php')) {
 </head><body>
 <center><div style="width: 50%; border: 1pt solid black; padding: 8pt; text-align: left;">
 <h3 style="color: red;">Configuration Error</h3>
-The configuration file, <code>config.php</code>, is present but 
+The configuration file, <code>config.php</code>, is present but
 it is not readable by the webserver.
 </div></center>
-</body></html><?
+</body></html><?php
 
 exit();
 
@@ -57,38 +68,38 @@ exit();
 
 	include_once('config.php');
 
-	$conn=mysql_pconnect($db['host'],$db['user'],$db['passwd']);
-	mysql_select_db($db['db'],$conn);
+	$conn_params = ['url' => $db['url']];
+	$db_conn = DriverManager::getConnection($conn_params);
 
-	$res=mysql_query("SELECT * from ".$db['prefix']."mensen WHERE ".
-			"nick='$login' and password=encrypt('$passwd',".
-				"substring(password,1,2)) LIMIT 1",$conn);
-	if($res && mysql_num_rows($res)==1) {
-		$row=mysql_fetch_assoc($res);
-		unset($passwd);
-		session_start();
-		// $login variable could be overridden by session,
-		// when register_globals is on in php.ini
-		$_SESSION['login']=addSlashes($_POST['login']);
-		$_SESSION['lang']=@$row['lang'];
+	$sth = $db_conn->executeQuery("SELECT * from mensen WHERE nick=? LIMIT 1",
+		[$login], [ParameterType::STRING]);
+	foreach ($sth->fetchAllAssociative() as $row)
+	{
+		if ($row['password']===null or password_verify($passwd, $row['password']))
+		{
+			unset($passwd);
+			session_start();
+			// $login variable could be overridden by session,
+			// when register_globals is on in php.ini
+			$_SESSION['login']=addSlashes($login);
+			$_SESSION['lang']=$row['lang'];
 
-		session_write_close();
-		header("HTTP/1.1 301 Moved Permanently");
-		header("Location: index.php");
-		exit();
-	} else {
-		sleep(1);
-		$passwd="";
+			session_write_close();
+			header("HTTP/1.1 301 Moved Permanently");
+			header("Location: index.php");
+			exit();
+		}
+		/* TODO: should probably show an error here */
+		$login="";
 	}
-	if($res)
-		mysql_free_result($res);
+	sleep(1);
 } else if(@$_GET['login']) {
 	$login=$_GET['login'];
-	$passwd="";
 } else {
 	$login="";
-	$passwd="";
-} ?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
+}
+$passwd="";
+?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 <head>
@@ -107,7 +118,7 @@ exit();
 	<td><input type=password size=8 id='password' name=passwd value=""></td>
   </tr>
 </table><br>
-<center><input type=submit value="login" onmouseover="this.setAttribute('class','hover')" 
+<center><input type=submit value="login" onmouseover="this.setAttribute('class','hover')"
 	onfocus="this.setAttribute('class','hover')" onmouseout="this.removeAttribute('class')"
 	onblur="this.removeAttribute('class')"></center>
 </form>

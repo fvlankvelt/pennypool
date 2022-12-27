@@ -1,4 +1,4 @@
-<?
+<?php
 /*
 	Huisrekening, a utility to share expenses among a group of friends
     Copyright (C) 2003-2005  Frank van Lankvelt <frnk@a-eskwadraat.nl>
@@ -20,6 +20,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+require_once 'vendor/autoload.php';
+use \Doctrine\DBAL\Types\Type;
+
 
 function randstr($size)
 {
@@ -34,72 +37,65 @@ function randstr($size)
                 else
                         $str.=chr($v-36+65+32);
         }
-        return $str;   
+        return $str;
 }
 
 /**
  * verwacht een db result
  *    act_id, name, afr_id, pers_id, credit
  * van alle deelnemers, gegroepeerd met
- *    act_id, name en afr_id 
+ *    act_id, name en afr_id
+ * @param \Doctrine\DBAL\Result $res
+ * @return string[][]
  */
-function parse_activiteiten($res)
+function parse_activiteiten(Doctrine\DBAL\Result $res): array
 {
+	/** @var people $people */
 	global $people;
 
-	// laad gegevens van alle mogelijke deelnemers
+	/* laad gegevens van alle mogelijke deelnemers */
 	$people->find();
 
-	$act_id = 0;
-	$item = array();
-	$total = 0.0;
-	$n = 0;
-	$act_ids = array();
+	/* first gather all data in a single data structure
+	 * $activiteiten has all activiteiten in order
+	 * $act_mapping maps $act_id to the correct array index of $activiteiten
+	 */
 	$activiteiten = array();
-	while($row = mysql_fetch_assoc($res))
+	$act_mapping = array();
+	while($row = $res->fetchAssociative())
 	{
-		if($row['act_id'] != $act_id)
-		{
-			if($act_id)
-			{
-				$item['total']  = $total;
-				$item['n']		= $n;
-				$item['debet']	= $item['total'] / $item['n'];
+		$act_id = $row['act_id'];
+		if (!array_key_exists($act_id, $act_mapping)) {
+			$activiteiten[] = array(
+				'act_id' => $row['act_id'],
+				'afr_id' => $row['afr_id'],
+				'name'   => $row['name'],
+				'date'   => $row['date'],
+				'credit' => array(),
+				'mult'   => array()
 
-				$activiteiten[] = $item;
-			}
-			$item['act_id'] = $row['act_id'];
-			$item['afr_id'] = $row['afr_id'];
-			$item['name']	= $row['name'];
-			$item['date']	= $row['date'];
-			$item['credit'] = array();
-			$total = 0.0;
-			$n = 0;
-
-			$act_id = $row['act_id'];
+			);
+			$act_mapping[$act_id] = array_key_last($activiteiten);
 		}
-		$total += $row['credit'];
 
-		$person = $people->find($row['pers_id']);
+		$this_act = &$activiteiten[$act_mapping[$act_id]];
 
-		if($person['type'] == 'person')
-			$item['mult'][$row['pers_id']] = $row['aantal'];
-		else
-			$item['mult'][$row['pers_id']] = 0;
+		$pers_id = $row['pers_id'];
+		$type    = $row['type'];
+		$mult    = $row['aantal'];
+		$credit  = $row['credit'];
 
-		$n += $item['mult'][$row['pers_id']];
+		$this_act['credit'][$pers_id] = $credit;
+		$this_act['mult'][$pers_id] = $type=='person' ? $mult : 0;
 
-		$item['credit'][$row['pers_id']] = $row['credit'];
-		if(!in_array($row['pers_id'], $act_ids))
-			$act_ids[] = $row['pers_id'];
 	}
-	if($act_id)
-	{
-		$item['total']  = $total;
-		$item['n']		= $n;
-		$item['debet']	= $item['total'] / $item['n'];
 
-		$activiteiten[] = $item;
+	/* now go through the entire array again to calculate totals etc */
+	foreach ($activiteiten as &$this_act)
+	{
+		$this_act['total'] = array_sum($this_act['credit']);
+		$this_act['n']     = array_sum($this_act['mult']);
+		$this_act['debet'] = $this_act['total'] / $this_act['n'];
 	}
 
 	return $activiteiten;
@@ -129,7 +125,7 @@ function calc_totals($activiteiten)
 	{
 		foreach($nicks as $id => $nick)
 		{
-			if(@$item['credit'][$id])
+			if(array_key_exists($id,$item['credit']))
 			{
 				$amount=$item['credit'][$id]-$item['mult'][$id] * $item['debet'];
 				$total_amount[$id]=@$total_amount[$id]+$amount;
@@ -178,22 +174,55 @@ function filter_mensen($activiteiten)
 	return array_diff($people->nick(), $all);
 }
 
-function parse_betalingen($res)
+function parse_betalingen(Doctrine\DBAL\Result $res): array
 {
 	global $people;
 
 	$sums = array();
 	$all = $people->nick();
-	while($row = mysql_fetch_assoc($res))
+	while($row = $res->fetchAssociative())
 	{
 		if(@$row['afr_id'])
 			$afr_id = $row['afr_id'];
 		else
 			$afr_id = 0;
-		$sums[$afr_id][$row['van']] =
-			@$sums[$afr_id][$row['van']] + $row['bedrag'];
-		$sums[$afr_id][$row['naar']] =
-			@$sums[$afr_id][$row['naar']] - $row['bedrag'];
+		$sums[$afr_id][$row['van']]  = @$sums[$afr_id][$row['van']]  + $row['bedrag'];
+		$sums[$afr_id][$row['naar']] = @$sums[$afr_id][$row['naar']] - $row['bedrag'];
 	}
 	return $sums;
+}
+
+function date_from_sql(string $date_sql): DateTime
+{
+	/** @var Doctrine\DBAL\Connection $dbh */
+	global $dbh;
+
+	$date = Type::getType('date')->convertToPHPValue($date_sql, $dbh->getDatabasePlatform());
+	return $date;
+}
+
+function date_to_sql(string $date): bool|string
+{
+	$dt = date_to_dt($date);
+	if (!$dt) return false;
+	return dt_to_sql($dt);
+}
+
+function dt_to_sql(DateTime $dt): string
+{
+	/** @var Doctrine\DBAL\Connection $dbh */
+	global $dbh;
+
+	$date_sqlsafe = Type::getType('date')->convertToDatabaseValue($dt, $dbh->getDatabasePlatform());
+	return $date_sqlsafe;
+}
+
+function date_to_dt(string $date): bool|DateTime
+{
+	/* TODO really annoying that these formats are used inconsistently */
+	$dt = DateTime::createFromFormat('!d-m-Y',$date);
+	if (!$dt) $dt = DateTime::createFromFormat('!Y-m-d',$date) ;
+	if (!$dt) return false;
+
+	return $dt;
 }

@@ -20,6 +20,17 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+/**
+ * @var Doctrine\DBAL\Connection $dbh
+ * @var string $login
+ * @var people $people
+ */
+
+require_once 'vendor/autoload.php';
+
+use \Doctrine\DBAL\DriverManager;
+use \Doctrine\DBAL\ParameterType;
+
 if(!file_exists('config.php')) {
 	header("HTTP/1.1 301 Moved Permanently");
 	header("Location: setup.php");
@@ -30,11 +41,19 @@ if(!file_exists('config.php')) {
 	exit();
 }
 include_once('config.php');
+global $db, $login, $people, $dbh, $mult_divider;
+
+/* determines fractional participation in event (e.g., set to 2 to allow half participation) */
+if (!isset($mult_divider) or empty($mult_divider)) {
+	$mult_divider = 1;
+}
+
+
 
 class people {
 	var $cache=array();
 
-	function people() {
+	function __construct() {
 		$this->cache=array();
 	}
 
@@ -51,24 +70,29 @@ class people {
 		}
 	}
 
+	/**
+	 * @param integer[]|null $id
+	 * @return array|false|mixed|mixed[]
+	 * @throws \Doctrine\DBAL\Exception
+	 */
 	function find($id = null) {
-		global $db,$db_conn;
+		global $dbh;
 
 		if(is_array(@$id)) {
 			$find=array();
 			foreach($id as $i) {
-				if(!@$this->cache[$i])
+				if(!isset($this->cache[$i]))
 					$find[]=$i;
 			}
 			if(count($find)>0) {
-				$res=mysql_query("SELECT * FROM ".$db['prefix']."mensen ".
-						"WHERE pers_id=".implode($find," OR pers_id="),
-						$db_conn);
-				while($row=mysql_fetch_assoc($res)) {
+				$res = $dbh->executeQuery(
+					"SELECT * FROM mensen WHERE pers_id IN (?)",
+					[@$id], [\Doctrine\DBAL\Connection::PARAM_INT_ARRAY]
+				);
+				while($row = $res->fetchAssociative()) {
 					$row['password']="";
 					$this->cache[$row['pers_id']]=$row;
 				}
-				mysql_free_result($res);
 				$this->_order();
 			}
 			$ret=array();
@@ -78,24 +102,27 @@ class people {
 			}
 			return $ret;
 		} else if(@$id) {
+			return ($this->find([$id]))[0];
+			/*
 			if(!@$this->cache[$id]) {
-				$res=mysql_query("SELECT * FROM ".$db['prefix']."mensen ".
-						"WHERE pers_id=$id",$db_conn);
-				$this->cache[$id]=mysql_fetch_assoc($res);
-				mysql_free_result($res);
+				$res = $dbh->executeQuery(
+					"SELECT * FROM mensen WHERE pers_id=?",
+					[$id], [ParameterType::INTEGER]
+				);
+				// TODO: handle case where nothing is found
+				$this->cache[$id]=$res->fetchAssociative();
 				$this->_order();
 			}
 			return $this->cache[$id];
+			*/
 		} else {
-			$res=mysql_query("SELECT * FROM ".$db['prefix']."mensen ".
-							 "ORDER BY type, nick ASC", $db_conn);
+			$res = $dbh->executeQuery("SELECT * FROM mensen ORDER BY type, nick ASC");
 			$ret=array();
-			while($row=mysql_fetch_assoc($res)) {
+			while($row = $res->fetchAssociative()) {
 				$row['password']="";
 				$this->cache[$row['pers_id']]=$row;
 				$ret[]=$row;
 			}
-			mysql_free_result($res);
 			return $ret;
 		}
 	}
@@ -105,36 +132,37 @@ class people {
 	}
 
 	function _cmp($a,$b) {
-		return strcmp($a['nick'],$b['nick']);
+		return strcmp($b['nick'],$a['nick']);
 	}
 }
 
-function amount_to_html($amount) {
+function amount_to_str(float $amount): string
+{
 	if(!$amount || abs($amount)<.005)
 		return "0.00";
-	$amount = round(100 * $amount) / 100;
-	$_amnt=split('\.',$amount);
-	if(count($_amnt)==1)
-		$_amnt[1]="";
-	while(strlen($_amnt[1])<2)
-			$_amnt[1]=$_amnt[1]."0";
-	if(strlen($_amnt[1])>2)
-		$_amnt[1]=substr($_amnt[1],0,2);
-	$_amount=$_amnt[0].".".$_amnt[1];
-	if($_amount<0) {
-		return "<font color=red>".$_amount."</font>";
+	$amount_str = sprintf("%.2f", $amount);
+	return $amount_str;
+}
+
+function amount_to_html(float $amount): string
+{
+	$amount_str = amount_to_str($amount);
+	if($amount<-0.004) {
+		return "<font color=red>$amount_str</font>";
 	} else {
-		return $_amount;
+		return $amount_str;
 	}
 }
 
 function my_data() {
-	global $login,$db,$db_conn;
+	global $login,$dbh;
 
-	$res=mysql_query("SELECT * FROM ".$db['prefix']."mensen ".
-					 "WHERE nick='$login'",$db_conn);
-	$row=mysql_fetch_assoc($res);
-	mysql_free_result($res);
+	$res = $dbh->executeQuery(
+		"SELECT * FROM mensen WHERE nick=?",
+		[$login], [ParameterType::STRING]
+	);
+	// TODO: show throw exception here if nothing found
+	$row = $res->fetchAssociative();
 	$row['password']="";
 	return $row;
 }
@@ -144,9 +172,9 @@ function get_languages()
 	$languages=array("nl");
 	$dir=opendir("lang");
 	while($file=readdir($dir)) {
-		if(!ereg(".php", $file) || $file=="new_lang.php")
+		if(!preg_match("/\.php$/", $file) || $file=="new_lang.php")
 			continue;
-		$languages[]=ereg_replace("(.*).php","\\1",$file);
+		$languages[]=preg_replace("/(.*).php$/","\\1",$file);
 	}
 	return $languages;
 }
@@ -157,7 +185,7 @@ function select_language($lng = "")
 	global $pp;
 
 	if($lng == 'nl')
-		$lang_data=array();
+		$lang_data=null;
 	else if($lng != '' && file_exists("lang/".$lng.".php"))
 		include_once("lang/".$lng.".php");
 	else if(isset($pp['lang']) && file_exists("lang/".$pp['lang'].".php"))
@@ -172,8 +200,15 @@ function __($txt)
 {
 	global $lang_data;
 
-	if(@$lang_data[$txt])
+	/* check whether we're using the default language */
+	if ($lang_data==null)
+		return $txt;
+
+	if (isset($lang_data[$txt]))
 		return $lang_data[$txt];
+	else
+		trigger_error("Missing translation for '$txt'", E_USER_WARNING);
+
 	return $txt;
 }
 
@@ -193,8 +228,10 @@ select_language($_SESSION['lang']);
 
 setlocale(LC_TIME, 'nl_NL');
 
-$db_conn=mysql_pconnect($db['host'],$db['user'],$db['passwd']);
-mysql_select_db($db['db'],$db_conn);
+$conn_params = ['url' => $db['url']];
+$dbh = DriverManager::getConnection($conn_params);
+
+unset($db['url']);
 unset($db['user']);
 unset($db['passwd']);
 

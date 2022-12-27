@@ -29,17 +29,17 @@ class calendar {
 	var $field='';
 	var $value='';
 
-	function calendar($field,$value='',$prefix='cal_') {
+	function __construct($field, DateTime $value = null, $prefix='cal_') {
 		$this->field=$field;
 		if(!$value)
 			$this->value=date('d-n-Y');
 		else
-			$this->value=$value;
+			$this->value=$value->format('d-n-Y');
 		$this->prefix=$prefix;
 	}
-	
+
 	function render_js() {
-		if(!$GLOBALS['_lib_cal_jslib_written']) 
+		if(!$GLOBALS['_lib_cal_jslib_written'])
 			$this->render_js_lib();
 		$prefix=$this->prefix;
 	}
@@ -47,14 +47,14 @@ class calendar {
 	function render_js_init() {
 ?>
   new calendar('<?=$this->prefix?>','<?=$this->value?>')
-<?
+<?php
 	}
 
 	function render_js_lib() {
 		$GLOBALS['_lib_cal_jslib_written']=true;
 ?>
 <script language="JavaScript">
-calendar=function(prefix,date) { 
+calendar=function(prefix,date) {
   var date_ar=date.split(/-/)
 
   this.prefix=prefix
@@ -187,7 +187,7 @@ calendar.prototype.days=function() {
 calendar.prototype.set_input=function(day) {
   var d=day
   var m=this.month+1
-  
+
   if(d<10)
     d='0'+d
   if(m<10)
@@ -242,16 +242,22 @@ function cal_parseInt(s) {
 }
 
 </script>
-<?  }
+<?php  }
 
-	function render_html() { 
+	function render_html(bool $is_disabled = false) {
 		$prefix=$this->prefix; ?>
 <!-- Start Kalender -->
-<div style="position: absolute; border: 0px; overflow: hidden; height: 18px; 
+<div style="position: absolute; border: 0px; overflow: hidden; height: 18px;
     width: 108px; z-index: 10;" id='<?=$prefix?>container'>
-<input type=text id='<?=$prefix?>date' name="<?=$this->field?>" size=12 
-    style="font-size: 80%; height: 18px;" value="<?=$this->value?>">
-<div id="<?=$prefix?>popup" style="position: absolute; height: 98px; 
+	<?php if ($is_disabled) { ?>
+		<input type=hidden id='<?=$prefix?>date' name="<?=$this->field?>" size=12
+			   style="font-size: 80%; height: 18px;" value="<?=$this->value?>" >
+		<input type=text id='<?=$prefix?>date' name="<?=$this->field?>_disabled" size=12
+			   style="font-size: 80%; height: 18px;" value="<?=$this->value?>" disabled >
+	<?php } else { ?>
+<input type=text id='<?=$prefix?>date' name="<?=$this->field?>" size=12
+    style="font-size: 80%; height: 18px;" value="<?=$this->value?>" >
+<div id="<?=$prefix?>popup" style="position: absolute; height: 98px;
     border: 1px solid; width: 106px; top: 18px; left: 0px;
     background-color: #eeeeee; font-size: 6px; text-align: center;">
 <a id="<?=$prefix?>prev">&lt;&lt;</a>&nbsp;<span id='<?=$prefix?>head'></span>&nbsp;<a id="<?=$prefix?>next">&gt;&gt;</a>
@@ -266,7 +272,7 @@ function cal_parseInt(s) {
     <th class=cal>v</th>
     <th class=cal>z</th>
   </tr>
-<?
+<?php
 for($i=0;$i<6;$i++) {
 	echo "  <tr>\n";
 	for($j=0;$j<7;$j++) {
@@ -275,7 +281,8 @@ for($i=0;$i<6;$i++) {
 	echo "  </tr>\n";
 }
 ?></table></div>
+			<?php } ?>
 </div>
 <!-- Eind  Kalender -->
-<?	}
+<?php	}
 }

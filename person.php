@@ -19,10 +19,16 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-
+require_once 'vendor/autoload.php';
+use \Doctrine\DBAL\ParameterType;
 
 require_once("pennypool.php");
 include_once("lib_layout.php");
+
+/**
+ * @var Doctrine\DBAL\Connection $dbh
+ */
+global $dbh, $pp;
 
 if(!@$_POST && !@$_GET) {
 	$title=__("Nieuw persoon");
@@ -30,13 +36,13 @@ if(!@$_POST && !@$_GET) {
 } else if (@$_GET['pers_id']) {
 	$title=__("Persoon bewerken");
 	$pers_id=$_GET['pers_id'];
-	$res=mysql_query("SELECT * FROM ".$db['prefix']."mensen ".
-					 "WHERE pers_id=".$_GET['pers_id'],$db_conn);
-	$info=mysql_fetch_assoc($res);
+	$res = $dbh->executeQuery(
+		"SELECT * FROM mensen WHERE pers_id=?",
+		[$_GET['pers_id']], [ParameterType::STRING]);
+	$info=$res->fetchAssociative();
 	$info['passwd2']=$info['password']="";
 	if(!@$info['lang'])
 		$info['lang']=@$pp['lang'];
-	mysql_free_result($res);
 } else {
 	if(@$_POST['pers_id']) {
 		$title=__("Persoon bewerken");
@@ -55,7 +61,7 @@ $form->head();
 
 if(@$pers_id) { ?>
 <input type=hidden name=pers_id value="<?=$pers_id?>">
-<? } ?><table align=center>
+<?php } ?><table align=center>
   <tr>
     <td align=right><label for="voornaam"><?=__("voornaam")?>:</label></td>
     <td align=left><input type=text name="voornaam" size=15 value="<?=@$info['voornaam']?>"></td>
@@ -78,7 +84,7 @@ if(@$pers_id) { ?>
   </tr>
   <tr>
     <td align=right><label for="password"><?=__("passwd")?><font color=red>*</font>:</label></td>
-    <td align=left><input type=password name="password" size=8 value="<?=@$info['password']?>"></td>
+    <td align=left><input type=password name="password" size=16 value="<?=@$info['password']?>"></td>
   </tr>
   <tr>
     <td align=right><label for="passwd2"><?=__("re-type")?>:</label></td>
@@ -87,7 +93,7 @@ if(@$pers_id) { ?>
   <tr>
     <td align=right><label for="lang"><?=__("taal")?>:</label></td>
     <td align=left><select name="lang" id="lang">
-<?
+<?php
 	foreach(get_languages() as $lng) {
 		echo "      <option value=\"$lng\"";
 		if($lng == @$info['lang'])
@@ -100,7 +106,7 @@ if(@$pers_id) { ?>
 <tr><td colspan=2 style="font-size: x-small;"><font
 color=red>*</font> <?=__("als dit veld leeg is, blijft het paswoord hetzelfde")?></td></tr>
 </table><br>
-<?
+<?php
 
 $form->foot();
 $popup->foot();

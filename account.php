@@ -20,9 +20,16 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+require_once 'vendor/autoload.php';
+use \Doctrine\DBAL\ParameterType;
 
 require_once("pennypool.php");
 include_once("lib_layout.php");
+
+/**
+ * @var Doctrine\DBAL\Connection $dbh
+ */
+global $dbh;
 
 if(!@$_POST && !@$_GET) {
 	$title=__("Nieuwe rekening");
@@ -30,10 +37,9 @@ if(!@$_POST && !@$_GET) {
 } else if (@$_GET['pers_id']) {
 	$title=__("Rekening bewerken");
 	$pers_id=$_GET['pers_id'];
-	$res=mysql_query("SELECT * FROM ".$db['prefix']."mensen ".
-					 "WHERE pers_id=".$_GET['pers_id'],$db_conn);
-	$info=mysql_fetch_assoc($res);
-	mysql_free_result($res);
+
+	$info=$dbh->executeQuery("SELECT * FROM mensen WHERE pers_id=?",
+		[$pers_id], [ParameterType::INTEGER])->fetchAssociative();
 } else {
 	if(@$_POST['pers_id']) {
 		$title=__("Rekening bewerken");
@@ -53,7 +59,7 @@ $form->head();
 
 if(@$pers_id) { ?>
 <input type=hidden name=pers_id value="<?=$pers_id?>">
-<? } ?>
+<?php } ?>
 <table align=center>
   <tr>
 	<td align=right><label for="nick"><?=__("naam")?>:</label></td>
@@ -64,7 +70,7 @@ if(@$pers_id) { ?>
 	<td align=left><input type=text name="rekeningnr" size=9 value="<?=@$info['rekeningnr']?>"></td>
   </tr>
 </table><br>
-<?
+<?php
 
 $form->foot();
 $popup->foot();

@@ -20,39 +20,45 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-/* set $login, $db_conn */
-require_once("pennypool.php");
-require_once("lib_util.php");
+require_once 'vendor/autoload.php';
+use \Doctrine\DBAL\ParameterType;
 
-?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN" 
+require_once("pennypool.php");
+include_once("lib_cal.php");
+include_once("lib_layout.php");
+include_once("lib_util.php");
+
+/**
+ * @var Doctrine\DBAL\Connection $dbh
+ * @var people $people
+ */
+global $dbh;
+global $people;
+
+
+?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 <head>
 <title><?=__("Huisrekening")?></title>
 <link rel=stylesheet title="Penny Pool" href="style.css">
-<script type="text/javascript" language="JavaScript1.2">
-function popup(link) {
-  window.open(link,'','toolbar=no,status=no,menubar=no,width=400px,height=400px,resizable=yes,scrollbars=yes')
-}
-function popup_large(link) {
-  window.open(link,'','toolbar=no,status=no,menubar=no,width=600px,height=400px,resizable=yes,scrollbars=yes')
-}
-</script>
+<?= javascript_popup(); ?>
 </head>
-<body><?
+<body><?php
 
 $afr_id=@$HTTP_GET_VARS["afr_id"];
 
 /* link zorgt ervoor dat we alleen acts krijgen waaraan zelf is meegedaan */
-$res = mysql_query("SELECT act.act_id as act_id,act.name,act.date,".
-				   "act.afr_id as afr_id, deeln.pers_id, ".
-				   "deeln.credit, deeln.aantal ".
-		"FROM ".$db['prefix']."deelnemers deeln,".
-			$db['prefix']."activiteiten act ".
-		"WHERE deeln.act_id=act.act_id AND act.afr_id=$afr_id ".
-		"ORDER BY act.act_id DESC",$db_conn);
-$activiteiten = parse_activiteiten($res);
-mysql_free_result($res);
+$stm = $dbh->executeQuery("
+		SELECT act.act_id AS act_id, act.name, act.date, act.afr_id as afr_id,
+			   deeln.credit, deeln.aantal
+		FROM deelnemers AS deeln,
+		     activiteiten AS act
+		WHERE deeln.act_id=act.act_id AND
+		      act.afr_id=?
+		ORDER BY act.date DESC, act.act_id DESC
+	",[$afr_id],[ParameterType::INTEGER]);
+$activiteiten = parse_activiteiten($stm);
 
 $me=my_data();
 
@@ -67,7 +73,7 @@ $me=my_data();
 <table cellspacing=0 cellpadding=2 style="border: 1pt solid black;" align=center>
   <tr>
     <th colspan=2 style="color: #666;"><?=__("activiteiten")?></th>
-<?
+<?php
 
 $nicks=$people->nick();
 foreach($nicks as $id=>$nick)
@@ -91,7 +97,7 @@ foreach($activiteiten as $item)
 ?>
   <tr onmouseover="this.style.backgroundColor='#cccccc'" onmouseout="this.style.backgroundColor='#ffffff'"
       onclick="popup('activiteit.php?act_id=<?=$item['act_id']?>')" class="enabled">
-<?
+<?php
 	echo "    <td id=\"act_".$item['act_id']."\" nowrap>".$item['date']."</td>\n";
 	echo "    <td id=\"act_".$item['act_id']."\" nowrap>".$item['name']."</td>\n";
 	foreach($nicks as $id => $nick)
@@ -113,18 +119,15 @@ foreach($activiteiten as $item)
 
 $total_amount = calc_totals($activiteiten);
 
-$res=mysql_query("SELECT van,naar,SUM(bedrag) as bedrag,afr_id ".
-				  "FROM ".$db['prefix']."betalingen ".
-				  "WHERE afr_id=$afr_id ".
-				  "GROUP BY van,naar", $db_conn);
-$sums = parse_betalingen($res);
-mysql_free_result($res);
+$stm = $dbh->executeQuery("SELECT van, naar, SUM(bedrag) AS BEDRAG, afr_id FROM betalingen WHERE afr_id=? GROUP BY van, naar",
+	[$afr_id], [ParameterType::INTEGER]);
+$sums = parse_betalingen($stm);
 $sums = @$sums[$afr_id];
 
 ?>
   <tr>
-	<th colspan=2 style="color: #666; padding-top: 8;"><?=__("betalingen")?></th>
-<?
+	<th colspan=2 style="color: #666; padding-top: 8px;"><?=__("betalingen")?></th>
+<?php
 foreach($nicks as $id => $nick) {
 	echo "    <td align=right>";
 	if(@$sums[$id])
@@ -138,7 +141,7 @@ echo "  </tr>\n";
 ?>
   <tr>
     <th colspan=2 align=center><?=__("totaal")?></th>
-<?
+<?php
 foreach($nicks as $id => $nick) {
 	echo "    <th align=right style=\"padding: 0px 5px 0px 5px;\">";
 	if(@$total_amount[$id] || @$sums[$id])

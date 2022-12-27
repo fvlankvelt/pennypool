@@ -23,49 +23,58 @@
 /* set $login, $db_conn */
 require_once("pennypool.php");
 require_once("lib_util.php");
+require_once("lib_layout.php");
 
-?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN" 
+use \Doctrine\DBAL\ParameterType;
+
+/**
+ * @var Doctrine\DBAL\Connection $dbh
+ * @var string $login
+ * @var people $people
+ */
+global $dbh, $login, $people;
+
+?><!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN"
   "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 <head>
 <title><?=__("Huisrekening")?></title>
 <link rel=stylesheet title="Penny Pool" href="style.css">
-<script type="text/javascript" language="JavaScript1.2">
-function popup(link) {
-  window.open(link,'','toolbar=no,status=no,menubar=no,width=400px,height=400px,resizable=yes,scrollbars=yes')
-}
-function popup_large(link) {
-  window.open(link,'','toolbar=no,status=no,menubar=no,width=600px,height=400px,resizable=yes,scrollbars=yes')
-}
-</script>
+<?= javascript_popup(); ?>
 </head>
-<body><?
-
-/* link zorgt ervoor dat we alleen acts krijgen waaraan zelf is meegedaan */
-$res = mysql_query(
-		"SELECT deeln.act_id as act_id,act.name,act.date,".
-				"act.afr_id as afr_id, deeln.pers_id, deeln.credit, ".
-				"deeln.aantal, pers.type ".
-		"FROM ".$db['prefix']."deelnemers deeln, ".
-				$db['prefix']."activiteiten act, ".
-			    $db['prefix']."deelnemers as link, ".
-			    $db['prefix']."mensen me ".
-		"LEFT JOIN ".$db['prefix']."mensen pers ".
-			"ON deeln.pers_id=pers.pers_id ".
-		"WHERE link.pers_id=me.pers_id AND deeln.act_id=link.act_id ".
-			"AND (me.nick='$login' OR act.afr_id!=0) ".
-			"AND deeln.act_id=act.act_id ".
-		"ORDER BY act.act_id DESC",$db_conn);
-$activiteiten = parse_activiteiten($res);
-mysql_free_result($res);
+<body><?php
 
 $me=my_data();
+
+/* select alle deelnemers/activiteiten waar we zelf aan deelnemen (voor overzicht)
+ * of die in een afrekening zitten (voor totalen afrekening) */
+$sql = "
+SELECT
+	deeln.act_id AS act_id, act.name, act.date,
+	act.afr_id AS afr_id, deeln.pers_id, deeln.credit,
+	deeln.aantal, pers.type
+FROM
+	deelnemers AS deeln
+LEFT JOIN
+	activiteiten AS act on act.act_id=deeln.act_id
+LEFT JOIN
+	mensen AS pers ON deeln.pers_id=pers.pers_id
+WHERE
+      act.afr_id!=0
+   OR act.act_id IN (SELECT DISTINCT act_id FROM deelnemers WHERE pers_id=?)
+ORDER BY
+	act.date DESC, act_id DESC, deeln.pers_id ASC;
+";
+$res = $dbh->executeQuery($sql, [$me['pers_id']], [ParameterType::INTEGER]);
+
+$activiteiten = parse_activiteiten($res);
+
 
 ?>
 <table align=center width=70%>
   <tr>
     <td valign=middle align=left width=60% nowrap>
-      <h1><?printf(__("%s's Huisrekening"), $me['nick'])?></h1></td>
+      <h1><?php printf(__("%s's Huisrekening"), $me['nick'])?></h1></td>
     <td valign=middle align=center width=40%>
       <table align=center cellpadding=5 cellspacing=0>
         <tr>
@@ -88,12 +97,12 @@ $me=my_data();
   </tr>
 </table>
 
-<table cellspacing=0 cellpadding=3 style="border: 1pt solid black;" align=center>
+<table cellspacing=0 cellpadding=3 style="border: 1pt solid black; border-collapse: collapse;" align=center>
   <tr>
-    <th colspan=2 style="color: #666;"><?=__("activiteiten")?>
+    <th colspan=2 style="color: #666; padding-top: 8pt; padding-bottom: 8pt;"><?=__("activiteiten")?>
       <small><a href="javascript:popup('activiteit.php')" style="color: #666;">(<?=__("nieuw")?>)</a></small>
     </th>
-<?
+<?php
 $nicks=$people->nick();
 foreach($nicks as $id=>$nick)
 {
@@ -103,13 +112,13 @@ foreach($nicks as $id=>$nick)
     <th style="padding: 0px 5px 0px 5px;" nowrap>
       <a href="javascript:popup('person.php?pers_id=<?=$id?>')"><?=$nick?></a>
     </th>
-<?	}
+<?php	}
 	else if($person['type'] == 'rekening')
 	{	?>
     <th style="padding: 0px 5px 0px 5px;" nowrap>
       <a href="javascript:popup('account.php?pers_id=<?=$id?>')"><?=$nick?></a>
     </th>
-<?	}
+<?php	}
 }
 echo "  </tr>\n";
 
@@ -122,15 +131,15 @@ foreach($current as $item)
 ?>
   <tr onmouseover="this.style.backgroundColor='#cccccc'" onmouseout="this.style.backgroundColor='#ffffff'"
       onclick="popup('activiteit.php?act_id=<?=$item['act_id']?>')" class="enabled">
-<?
+<?php
 	echo "    <td id=\"act_".$item['act_id']."\" nowrap>".$item['date']."</td>\n";
 	echo "    <td id=\"act_".$item['act_id']."\" nowrap>".$item['name']."</td>\n";
 	foreach($nicks as $id => $nick)
 	{
 		echo "    <td align=right style=\"padding: 0px 5px 0px 5px;\">";
-		if(@$item['credit'][$id])
+		if(array_key_exists($id, $item['credit']))
 		{
-			$amount=$item['credit'][$id]-$item['mult'][$id] * $item['debet'];
+			$amount = $item['credit'][$id] - $item['mult'][$id] * $item['debet'];
 			echo amount_to_html($amount);
 		}
 		else
@@ -147,8 +156,8 @@ $my_dept = calc_debts($current, $me);
 
 ?>
   <tr>
-    <th colspan=2 align=center><?=__("totaal")?></th>
-<?
+    <th  style="padding-bottom: 8pt;" colspan=2 align=center><?=__("totaal")?></th>
+<?php
 foreach($nicks as $id => $nick) {
 	echo "    <th align=right style=\"padding: 0px 5px 0px 5px;\">";
 	if(@$total_amount[$id])
@@ -158,39 +167,42 @@ foreach($nicks as $id => $nick) {
 	echo "</th>\n";
 }	?>
   </tr>
-<?
+<?php
 
 /* betalingen */
 ?>
-  <tr>
-    <th colspan=2 style="color: #666; padding-top: 8;"><?=__("betalingen")?></th>
-<?
+  <tr style=" border-top: 1pt solid black;">
+    <th colspan=2 style="color: #666; padding-top: 8pt; padding-bottom: 8pt;"><?=__("betalingen")?></th>
+<?php
 foreach($nicks as $id => $nick) { ?>
     <th>&nbsp;</th>
-<? } ?>
+<?php } ?>
   </tr>
-<?
+<?php
 
 /*
  * twee rijen:
  *       - wat ik heb betaald / aan mij is betaald
  *		 - wat verder aan elkaar is betaald
  */
-$res = mysql_query("SELECT van,naar,SUM(bedrag) as bedrag ".
-				  "FROM ".$db['prefix']."betalingen ".
-				  "WHERE (van=".$me['pers_id']." OR naar=".$me['pers_id'].") ".
-				  "AND afr_id=0 ".
-				  "GROUP BY van,naar",
-				  $db_conn);
+$stm = $dbh->prepare("
+	SELECT van,naar,SUM(bedrag) as bedrag
+	FROM betalingen
+	WHERE
+	    (van=:me OR naar=:me)
+		AND afr_id=0
+	GROUP BY van,naar");
+$stm->bindValue("me", $me['pers_id'], ParameterType::INTEGER);
+$res = $stm->executeQuery();
+
 $sums = parse_betalingen($res);
-mysql_free_result($res);
 $sums = @$sums[0];
 
 ?>
   <tr onmouseover="this.style.backgroundColor='#cccccc'" onmouseout="this.style.backgroundColor='#ffffff'"
       onclick="popup('betaal_overzicht.php')" class="enabled">
     <td colspan=2><?=__("aan/door mij betaald")?></td>
-<?
+<?php
 foreach($nicks as $id => $nick) {
 	echo "    <td align=right>";
 	if(@$sums[$id])
@@ -202,21 +214,24 @@ foreach($nicks as $id => $nick) {
 echo "  </tr>\n";
 
 /* rest */
-$res = mysql_query("SELECT van,naar,SUM(bedrag) as bedrag ".
-				  "FROM ".$db['prefix']."betalingen ".
-				  "WHERE NOT (van=".$me['pers_id']." OR ".
-				  			  "naar=".$me['pers_id'].") ".
-				  "AND afr_id=0 ".
-				  "GROUP BY van,naar",
-				  $db_conn);
+$stm = $dbh->prepare("
+	SELECT van, naar, SUM(bedrag) as bedrag
+	FROM betalingen
+	WHERE
+	    NOT (van=:me OR naar=:me)
+		AND afr_id=0
+	GROUP BY van,naar
+");
+$stm->bindValue("me", $me['pers_id'], ParameterType::INTEGER);
+$res=$stm->executeQuery();
+
 $sums = parse_betalingen($res);
-mysql_free_result($res);
 $sums = @$sums[0];
 
 ?>
   <tr>
-    <td colspan=2><?=__("andere betalingen")?></td>
-<?
+    <td style="padding-bottom: 8pt;" colspan=2><?=__("andere betalingen")?></td>
+<?php
 foreach($nicks as $id => $nick) {
 	echo "    <td align=right>";
 	if(@$sums[$id])
@@ -239,7 +254,7 @@ foreach($activiteiten as $item)
 		$total_afr[$afr_id] = array();
 	foreach($nicks as $id => $nick)
 	{
-		if(@$item['credit'][$id])
+		if(array_key_exists($id, $item['credit']) or array_key_exists($id, $item['mult']))
 		{
 			$amount = $item['credit'][$id];
 			$person = $people->find($id);
@@ -250,10 +265,8 @@ foreach($activiteiten as $item)
 	}
 }
 
-$res = mysql_query("SELECT * FROM ".$db['prefix']."betalingen ".
-				   "WHERE afr_id!=0", $db_conn);
+$res = $dbh->executeQuery("SELECT * FROM betalingen WHERE afr_id!=0");
 $total_bet = parse_betalingen($res);
-mysql_free_result($res);
 
 foreach($total_bet as $afr_id => $sums) {
 	foreach($sums as $id => $sum) {
@@ -262,24 +275,23 @@ foreach($total_bet as $afr_id => $sums) {
 	}
 }
 
-$res = mysql_query("SELECT * FROM ".$db['prefix']."afrekeningen ".
-				   "ORDER BY date DESC", $db_conn);
+$res = $dbh->executeQuery("SELECT * FROM afrekeningen ORDER BY date DESC");
 ?>
-  <tr>
-    <th colspan=2 style="color: #666; padding-top: 8;"><?=__("afrekeningen")?> 
+  <tr style="border-top: 1pt solid black;">
+    <th colspan=2 style="color: #666; padding-top: 8pt; padding-bottom: 8pt;"><?=__("afrekeningen")?>
       <small><a href="javascript:popup_large('afrekening.php')" style="color: #666;">(<?=__("nieuw")?>)</a></small>
     </th>
-<?  foreach($nicks as $id=>$nick) { ?>
+<?php  foreach($nicks as $id=>$nick) { ?>
     <th>&nbsp;</th>
-<?  } ?>
+<?php  } ?>
   </tr>
-<?
+<?php
 
-while($row = mysql_fetch_assoc($res))
+while($row = $res->fetchAssociative())
 {	?>
   <tr onmouseover="this.style.backgroundColor='#cccccc'" onmouseout="this.style.backgroundColor='#ffffff'"
       onclick="popup_large('afrekening.php?afr_id=<?=$row['afr_id']?>')" class="enabled">
-<?
+<?php
 	echo "    <th colspan=2>".$row['date']."</th>\n";
 	foreach($nicks as $id => $nick)
 	{
@@ -296,7 +308,6 @@ while($row = mysql_fetch_assoc($res))
 	}
 	echo "  </tr>\n";
 }
-mysql_free_result($res);
 
 echo "</table><br>\n";
 

@@ -20,9 +20,19 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+require_once 'vendor/autoload.php';
+use \Doctrine\DBAL\ParameterType;
+
 
 require_once("pennypool.php");
 include_once("lib_layout.php");
+include_once("lib_util.php");
+
+/**
+ * @var Doctrine\DBAL\Connection $dbh
+ */
+global $dbh, $pp;
+
 
 function check_post_vars($popup) {
 	global $_POST;
@@ -32,9 +42,10 @@ function check_post_vars($popup) {
 		$popup->set_error(__("Personen zijn gelijk."));
 		return false;
 	}
-	if(@$_POST['datum']=='') {
-		$popup->set_error(__("Datum is niet geldig."));
-		return false;
+	if(!isset($_POST['datum']) or date_to_sql($_POST['datum'])===false)
+	{
+		$popup->set_error(__("Datum is ongeldig"));
+		return 0;
 	}
 	if(!@$_POST['bedrag'] || $_POST['bedrag'] == "0.00") {
 		$popup->set_error(__("Bedrag is nul."));
@@ -46,42 +57,42 @@ function check_post_vars($popup) {
 $popup = new popup_eval(__("Betaling opslaan"), "betaling.php",
 						"betaal_overzicht.php");
 
-if(check_post_vars(&$popup)) {
+if(check_post_vars($popup)) {
 	$info=array();
 	foreach(array('van','naar','bedrag') as $key) {
 		$info[$key]=addSlashes(@$_POST[$key]);
 	}
-	$date=split('-',$_POST['datum']);
-	$info['datum']=$date[2]."-".$date[1]."-".$date[0];
+	$info['datum'] = date_to_sql($_POST['datum']);
 	/* update */
 	switch($_POST['action'])
 	{
 	case 'delete':
-		$res=mysql_query("DELETE FROM ".$db['prefix']."betalingen ".
-				"WHERE van=".$info['van']." AND naar=".$info['naar']." ".
-				"AND datum='".$info['datum']."'",$db_conn);
+		$cnt = $dbh->executeStatement("DELETE FROM betalingen WHERE van=? AND naar=? AND datum=?",
+			[$info['van'], $info['naar'], $info['datum']],
+			[ParameterType::INTEGER, ParameterType::INTEGER, ParameterType::STRING]
+		);
 		break;
 	case 'update':
-		$res=mysql_query("UPDATE ".$db['prefix']."betalingen SET ".
-				"bedrag='".$info['bedrag']."' WHERE ".
-				"van=".$info['van']." AND naar=".$info['naar']." ".
-				"AND datum='".$info['datum']."'",$db_conn);
+		/* TODO: bug: updating won't work very well, because the theings you are updating are also primary keys
+		 *            so changing "var" or "naar" or "datum" will create a new bealting instead of updating the old one */
+		$cnt = $dbh->executeStatement("UPDATE betalingen SET bedrag=? WHERE van=? AND naar=? AND datum=?",
+			[$info['bedrag'],$info['van'], $info['naar'], $info['datum']],
+			[ParameterType::STRING, ParameterType::INTEGER, ParameterType::INTEGER, ParameterType::STRING]
+		);
 		break;
 	case 'insert':
-		$query="INSERT INTO ".$db['prefix']."betalingen ".
-				"(van,naar,bedrag,datum) VALUES (".
-				$info['van'].",".$info['naar'].",'".$info['bedrag']."',".
-				"'".$info['datum']."')";
-		$res=mysql_query($query,$db_conn);
-		if(!@$res || mysql_errno())
-		{
+		try {
+			$cnt = $dbh->executeStatement("INSERT INTO betalingen (bedrag,van,naar,datum) VALUES (?,?,?,?)",
+				[$info['bedrag'],$info['van'], $info['naar'], $info['datum']],
+				[ParameterType::STRING, ParameterType::INTEGER, ParameterType::INTEGER, ParameterType::STRING]
+			);
+		} catch (\Doctrine\DBAL\Exception $e) {
 			$popup->set_error(__("Er bestaat al een betaling op deze dag."));
 			$popup->render_error($_POST);
 			exit();
 		}
 		break;
 	}
-	mysql_free_result($res);
 
 	$popup->render_ok();
 }
