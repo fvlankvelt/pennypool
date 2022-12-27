@@ -36,8 +36,9 @@ include_once("lib_util.php");
 
 /**
  * @var Doctrine\DBAL\Connection $dbh
+ * @var int $mult_divider
  */
-global $dbh;
+global $dbh, $mult_divider;
 
 $res = $dbh->executeQuery("SELECT * FROM mensen ORDER BY type DESC, nick ASC");
 $ids = array();
@@ -47,7 +48,7 @@ while($row=$res->fetchAssociative())
 {
 	$row['checked'] = 0;
 	$row['credit']  = '0.00';
-	$row['mult'] = 1;
+	$row['mult'] = $mult_divider;
 	$ids[] = $row['pers_id'];
 	$persons[$row['pers_id']] = $row;
 	if($row['type'] == 'rekening')
@@ -379,7 +380,7 @@ if(@$act_id) { ?>
 <?php  if($person['type'] == "person") { ?>
     <select name='id_<?=$i?>_mult' id='id_<?=$i?>_mult' onclick="cancel(<?=$i?>)" onchange="select_mult(<?=$i?>, this.value)">
 <?php
-		for($j = 1; $j < 8; $j++)
+		for($j = 1; $j < 6*$mult_divider; $j++)
 		{
 			echo "      <option name=\"$j\" value=\"$j\"";
 			if($person['mult'] == $j)

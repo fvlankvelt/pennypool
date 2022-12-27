@@ -344,7 +344,7 @@ information into <code>config.php</code> (in the directory where
 &lt;?php
  	$db['url']="<?=$_POST['db_url']?>";
 	$pp['lang']="<?=$_POST['lang']?>";
-
+    $mult_divider = 2; # set to 1 to disallow fractional participation in events
 </pre>
 
 <p>You have to make sure it has the right

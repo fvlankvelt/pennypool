@@ -41,7 +41,14 @@ if(!file_exists('config.php')) {
 	exit();
 }
 include_once('config.php');
-global $db, $login, $people, $dbh;
+global $db, $login, $people, $dbh, $mult_divider;
+
+/* determines fractional participation in event (e.g., set to 2 to allow half participation) */
+if (!isset($mult_divider) or empty($mult_divider)) {
+	$mult_divider = 1;
+}
+
+
 
 class people {
 	var $cache=array();
