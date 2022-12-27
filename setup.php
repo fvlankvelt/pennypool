@@ -82,17 +82,6 @@ function create_tables(\Doctrine\DBAL\Connection $conn)
 	$table_mns->addUniqueIndex(["nick"], "nick");
 
 
-	/*
-	echo "<pre>sqlite\n";
-	$foo = $schema->toSql(new Doctrine\DBAL\Platforms\SqlitePlatform);
-	var_dump($foo);
-	echo "</pre><pre>mysql\n";
-	$foo = $schema->toSql(new Doctrine\DBAL\Platforms\MySQL80Platform);
-	var_dump($foo);
-	echo "</pre>";
-	*/
-	// TODO: init mensen als: (pers_id,voornaam,nick) VALUES (1,'User','user')
-
 
 	#$sm = $conn->getSchemaManager();
 	$sm = $conn->getDatabasePlatform()->createSchemaManager($conn);
