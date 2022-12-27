@@ -83,13 +83,15 @@ else if(@$_POST['ids'])
 			$persons[$ids[$i]]['mult'] = $_POST['id_'.$i.'_mult'];
 		}
 	}
-	if(@$_POST['date'])
-	{
-		$date=DateTime::createFromFormat('!d-m-Y',$_POST['date']);
+	if(@$_POST['date']) {
+		$date = DateTime::createFromFormat('!d-m-Y',$_POST['date']);
+	} else {
+		$date = new DateTime("now");
 	}
-	if(@$_POST['name'])
-	{
-		$name=$_POST['name'];
+	if(@$_POST['name']) {
+		$name = $_POST['name'];
+	} else {
+		$name = "";
 	}
 }
 else if (@$_GET['act_id'])

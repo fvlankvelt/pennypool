@@ -36,9 +36,9 @@ function check_post_vars($popup) {
 	/** @var people $people */
 	global $people;
 
-	if(@$_POST['name']=='' || @$_POST['date']=='')
+	if(@$_POST['name']=='')
 	{
-		$popup->set_error(__("Geen naam en/of datum"));
+		$popup->set_error(__("Geen naam"));
 		return 0;
 	}
 
