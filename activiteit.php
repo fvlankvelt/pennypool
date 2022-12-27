@@ -377,14 +377,14 @@ if(@$act_id) { ?>
 ?>>&nbsp;<?=$person['nick']?></input></td>
   <td align=center class="input">
 <?php  if($person['type'] == "person") { ?>
-    <select name='id_<?=$i?>_mult' id='id_<?=$i?>_mult' onclick="cancel(<?=$i?>)">
+    <select name='id_<?=$i?>_mult' id='id_<?=$i?>_mult' onclick="cancel(<?=$i?>)" onchange="select_mult(<?=$i?>, this.value)">
 <?php
 		for($j = 1; $j < 8; $j++)
 		{
 			echo "      <option name=\"$j\" value=\"$j\"";
 			if($person['mult'] == $j)
 				echo " selected";
-			echo " onclick=\"select_mult($i,$j)\">$j</option>\n";
+			echo ">".($j/$mult_divider)."</option>\n";
 		}
 	?>
     </select>
